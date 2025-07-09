@@ -80,6 +80,7 @@ body {
   background: linear-gradient(to right, #0f172a, #1e293b);
   text-align: center;
   color: white;
+  padding-top: 6rem;
 }
 
 .hero h1 {
