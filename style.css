@@ -5,6 +5,17 @@ body {
   color: #1e293b;
   line-height: 1.6;
 }
+.logo-banner {
+  background: #f8fafc;
+  padding: 1rem 2rem;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.logo-banner img {
+  max-width: 180px;
+  height: auto;
+}
 
 .hero {
   padding: 4rem 2rem;
