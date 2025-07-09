@@ -74,9 +74,10 @@ ul {
 
 .massage-img {
   width: 100%;
-  max-width: 500px;
+  max-width: 300px;
   border-radius: 1rem;
-  margin: 1.5rem 0;
+  margin: 1.5rem auto;
+  display: block;
 }
 
 footer {
