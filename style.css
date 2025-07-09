@@ -1,3 +1,25 @@
+body::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 600px;
+  height: 600px;
+  background-image: url('STS.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  opacity: 0.03;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+body {
+  position: relative;
+  z-index: 1;
+  background-color: #f8fafc;
+}
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
