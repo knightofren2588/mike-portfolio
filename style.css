@@ -9,12 +9,22 @@ body::before {
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
-  opacity: 0.06;
+  opacity: 0.05;
   transform: translate(-50%, -50%);
   z-index: 0;
   pointer-events: none;
+  animation: spinLogo 120s linear infinite, pulse 10s ease-in-out infinite;
 }
 
+@keyframes spinLogo {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.04; }
+  50% { opacity: 0.07; }
+}
 body {
   position: relative;
   z-index: 1;
@@ -26,6 +36,32 @@ body {
   background: #f8fafc;
   color: #1e293b;
   line-height: 1.6;
+}
+.sticky-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1.5rem;
+  z-index: 999;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+}
+
+.nav-logo {
+  width: 40px;
+  height: auto;
+  margin-right: 0.75rem;
+}
+
+.sticky-nav span {
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
 }
 .logo-banner {
   background: #f8fafc;
