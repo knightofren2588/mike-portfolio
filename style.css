@@ -107,7 +107,7 @@ body::before {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
   display: block;
-  margin: 0 auto;
+  margin: 2rem auto;
 }
 
 .profile-photo:hover {
