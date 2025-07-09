@@ -9,7 +9,7 @@ body::before {
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center;
-  opacity: 0.03;
+  opacity: 0.06;
   transform: translate(-50%, -50%);
   z-index: 0;
   pointer-events: none;
