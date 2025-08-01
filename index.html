@@ -142,12 +142,15 @@
         </div>
         
         <div class="app-actions">
-          <a href="https://financial-workbook.vercel.app/" target="_blank" rel="noopener" class="btn app-btn">
+          <a href="https://financial-workbook.vercel.app/" target="_blank" rel="noopener" class="btn app-btn" onclick="trackAppClick('launch')">
             🔗 Launch App
           </a>
-          <a href="https://financial-workbook.vercel.app/" target="_blank" rel="noopener" class="btn btn-secondary">
+          <a href="https://financial-workbook.vercel.app/" target="_blank" rel="noopener" class="btn btn-secondary" onclick="trackAppClick('demo')">
             📱 View Demo
           </a>
+          <div class="click-counter">
+            <span id="clickCount">0</span> people have checked out this app
+          </div>
         </div>
       </div>
 
@@ -298,5 +301,49 @@
   </footer>
 
   <script src="Portfolio.js"></script>
+  
+  <!-- Click Tracking Script -->
+  <script>
+    // Initialize click count from localStorage or start at 0
+    let clickCount = parseInt(localStorage.getItem('financialWorkbookClicks') || '0');
+    
+    // Update the display
+    document.getElementById('clickCount').textContent = clickCount;
+    
+    // Track app clicks
+    function trackAppClick(type) {
+      // Increment click count
+      clickCount++;
+      
+      // Save to localStorage
+      localStorage.setItem('financialWorkbookClicks', clickCount.toString());
+      
+      // Update display
+      document.getElementById('clickCount').textContent = clickCount;
+      
+      // Optional: Send analytics data (you can add Google Analytics or other tracking here)
+      console.log(`App clicked: ${type} - Total clicks: ${clickCount}`);
+      
+      // Optional: Send to a simple analytics service
+      // fetch('https://your-analytics-endpoint.com/track', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ 
+      //     event: 'app_click', 
+      //     type: type, 
+      //     total_clicks: clickCount,
+      //     timestamp: new Date().toISOString()
+      //   })
+      // });
+    }
+    
+    // Optional: Track page views
+    window.addEventListener('load', function() {
+      let pageViews = parseInt(localStorage.getItem('portfolioPageViews') || '0');
+      pageViews++;
+      localStorage.setItem('portfolioPageViews', pageViews.toString());
+      console.log(`Portfolio page view: ${pageViews}`);
+    });
+  </script>
 </body>
 </html>

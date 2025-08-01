@@ -454,6 +454,29 @@
     flex-wrap: wrap;
   }
   
+  .click-counter {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 0.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--text-light);
+    transition: var(--transition);
+  }
+  
+  .click-counter:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.3);
+  }
+  
+  .click-counter span {
+    font-weight: 600;
+    color: var(--primary-blue);
+  }
+  
   .app-btn {
     background: var(--react-blue);
     color: var(--dark-bg);
