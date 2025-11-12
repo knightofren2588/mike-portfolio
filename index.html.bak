@@ -248,45 +248,6 @@
     <div class="project-category">
       <h3>💻 Software Engineering / App Development</h3>
       <div class="card-grid">
-        <div class="card featured-project">
-          <h4>🚚 Showcase Transport LLC — Full-Stack Client Website</h4>
-          <p><strong>First Major Client Project:</strong> Complete website for freight and logistics company. Built from scratch with modern React architecture, featuring custom animations, professional branding, and exceptional performance optimization.</p>
-          <div class="project-features">
-            <strong>Key Features:</strong>
-            <ul>
-              <li>Custom truck docking animation sequence</li>
-              <li>Professional equipment showcase with real photography</li>
-              <li>JotForm contact system integration</li>
-              <li>Mobile-first responsive design</li>
-              <li>PWA functionality for app-like experience</li>
-              <li>Enterprise-grade security headers</li>
-            </ul>
-          </div>
-          <div class="project-outcome">
-            <strong>Performance Metrics (Top 1% Globally):</strong>
-            <ul>
-              <li>🚀 Performance: 98/100</li>
-              <li>🎯 SEO: 100/100</li>
-              <li>♿ Accessibility: 96/100</li>
-              <li>✅ Best Practices: 100/100</li>
-            </ul>
-          </div>
-          <div class="tech-tags">
-            <span class="tech-badge">React</span>
-            <span class="tech-badge">Vite</span>
-            <span class="tech-badge">Tailwind CSS</span>
-            <span class="tech-badge">JavaScript</span>
-            <span class="tech-badge">Netlify</span>
-            <span class="tech-badge">JotForm</span>
-            <span class="tech-badge">Responsive Design</span>
-            <span class="tech-badge">SEO Optimized</span>
-          </div>
-          <div style="margin-top: 1rem;">
-            <a href="https://showcasetransportllc.com" target="_blank" rel="noopener" class="btn" style="background: #00CC6F; color: #002B36; font-size: 0.9rem; padding: 0.5rem 1rem;">
-              🌐 View Live Site
-            </a>
-          </div>
-        </div>
         <div class="card">
           <h4>🦆 Sunny the Safety Duck</h4>
           <p>Interactive animated web mascot that delivers safety tips with personality. Built with CSS animations and JavaScript interactions for Equitas Health internal use.</p>
