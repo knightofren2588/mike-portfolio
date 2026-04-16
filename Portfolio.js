@@ -50,6 +50,75 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     });
+
+    const typingText = document.getElementById('typingText');
+    const typingPhrases = [
+      "Software Developer",
+      "AI Developer",
+      "IT Expert",
+      "Content Creator",
+      "React Developer",
+      "Licensed Massage Therapist",
+    ];
+
+    if (typingText) {
+      let phraseIndex = 0;
+      let charIndex = 0;
+      let isDeleting = false;
+
+      const type = () => {
+        const phrase = typingPhrases[phraseIndex];
+
+        if (isDeleting) {
+          charIndex = Math.max(0, charIndex - 1);
+        } else {
+          charIndex = Math.min(phrase.length, charIndex + 1);
+        }
+
+        typingText.textContent = phrase.slice(0, charIndex);
+
+        if (!isDeleting && charIndex === phrase.length) {
+          isDeleting = true;
+          setTimeout(type, 1000);
+          return;
+        }
+
+        if (isDeleting && charIndex === 0) {
+          isDeleting = false;
+          phraseIndex = (phraseIndex + 1) % typingPhrases.length;
+          setTimeout(type, 250);
+          return;
+        }
+
+        setTimeout(type, isDeleting ? 45 : 70);
+      };
+
+      type();
+    }
+
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    if (hamburger && mobileMenu) {
+      hamburger.addEventListener('click', () => {
+        hamburger.classList.toggle('open');
+        mobileMenu.classList.toggle('open');
+      });
+
+      document.querySelectorAll('.mobile-link').forEach(link => {
+        link.addEventListener('click', () => {
+          hamburger.classList.remove('open');
+          mobileMenu.classList.remove('open');
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!hamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
+          hamburger.classList.remove('open');
+          mobileMenu.classList.remove('open');
+        }
+      });
+    }
   
     // Add scroll effect to sticky nav
     let lastScrollY = window.scrollY;
@@ -75,18 +144,6 @@ document.addEventListener("DOMContentLoaded", () => {
       badge.addEventListener('mouseleave', function() {
         this.style.transform = 'scale(1) rotate(0deg)';
       });
-    });
-  
-    // Add interactive hover effects to hero background
-    document.addEventListener('mousemove', (e) => {
-      const hero = document.querySelector('.hero');
-      if (hero && hero.contains(e.target)) {
-        const x = e.clientX / window.innerWidth;
-        const y = e.clientY / window.innerHeight;
-        hero.style.background = `linear-gradient(135deg, 
-          hsl(${210 + x * 10}, 90%, ${15 + y * 5}%) 0%, 
-          hsl(${210 + x * 15}, 80%, ${20 + y * 8}%) 100%)`;
-      }
     });
   
     // Performance optimization: Throttle scroll events

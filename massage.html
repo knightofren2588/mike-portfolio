@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sacred Hands — licensed massage therapy with Mike in Chillicothe, Ohio." />
+  <meta name="author" content="Mike Butcher" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:title" content="Sacred Hands | Massage Therapy" />
+  <meta property="og:description" content="Licensed massage therapy — therapeutic, restorative bodywork." />
+  <meta property="og:type" content="website" />
+  <title>Sacred Hands | Massage Therapy | StarkTech Studios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <style>
+    /* Sacred Hands — scoped to override shared style.css */
+    body.sacred-hands-page::before {
+      display: none;
+    }
+
+    body.sacred-hands-page {
+      --sh-bg: #120f08;
+      --sh-bg-secondary: #1a160d;
+      --sh-bg-card: #211a10;
+      --sh-amber: #c4924a;
+      --sh-amber-light: #e0b06a;
+      --sh-sage: #7a9e6e;
+      --sh-sage-light: #a0c494;
+      --sh-lavender: #b09cc0;
+      --sh-gold: #d4a853;
+      --sh-gold-light: #ecc97a;
+      --sh-glow-amber: rgba(196, 146, 74, 0.22);
+      --sh-glow-sage: rgba(122, 158, 110, 0.2);
+      --sh-glow-lavender: rgba(176, 156, 192, 0.2);
+      --sh-text: #e8dcc8;
+      --sh-text-muted: #8a7a60;
+      --sh-border: rgba(196, 146, 74, 0.15);
+      --sh-border-gold: rgba(212, 168, 83, 0.28);
+      --sh-border-sage: rgba(122, 158, 110, 0.2);
+      background-color: var(--sh-bg);
+      background-image:
+        radial-gradient(ellipse 70% 50% at 15% 10%, rgba(122, 158, 110, 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 85% 85%, rgba(196, 146, 74, 0.07) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 50% 30%, rgba(176, 156, 192, 0.04) 0%, transparent 65%),
+        repeating-linear-gradient(0deg, transparent, transparent 54px, rgba(196, 146, 74, 0.012) 54px, rgba(196, 146, 74, 0.012) 55px),
+        repeating-linear-gradient(90deg, transparent, transparent 54px, rgba(196, 146, 74, 0.012) 54px, rgba(196, 146, 74, 0.012) 55px);
+      color: var(--sh-text);
+      font-family: 'Inter', sans-serif;
+      padding-top: 72px;
+    }
+
+    body.sacred-hands-page h1,
+    body.sacred-hands-page h2,
+    body.sacred-hands-page h3 {
+      color: var(--sh-text);
+    }
+
+    body.sacred-hands-page p,
+    body.sacred-hands-page li {
+      color: var(--sh-text);
+    }
+
+    body.sacred-hands-page a {
+      color: inherit;
+    }
+
+    @keyframes sh-float {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(18px, -22px); }
+    }
+
+    @keyframes sh-float-alt {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-14px, 16px); }
+    }
+
+    body.sacred-hands-page .sh-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(18, 15, 8, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--sh-border);
+    }
+
+    body.sacred-hands-page .sh-nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    body.sacred-hands-page .sh-logo {
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--sh-lavender);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    body.sacred-hands-page .sh-logo:hover {
+      color: var(--sh-amber-light);
+    }
+
+    body.sacred-hands-page .sh-nav-links {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    body.sacred-hands-page .sh-nav-links a {
+      color: var(--sh-text-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    body.sacred-hands-page .sh-nav-links a:hover {
+      color: var(--sh-amber-light);
+    }
+
+    body.sacred-hands-page .sh-nav-back {
+      border: 1px solid var(--sh-border);
+      border-radius: 999px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.8rem;
+    }
+
+    body.sacred-hands-page .sh-nav-back:hover {
+      border-color: var(--sh-amber-light);
+      color: var(--sh-amber-light);
+    }
+
+    @media (max-width: 768px) {
+      body.sacred-hands-page .sh-nav-links {
+        gap: 0.65rem;
+        justify-content: flex-end;
+      }
+      body.sacred-hands-page .sh-nav-links li {
+        font-size: 0.85rem;
+      }
+    }
+
+    body.sacred-hands-page .sh-hero {
+      min-height: calc(100vh - 72px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(180deg, #1a1208 0%, var(--sh-bg) 100%);
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    body.sacred-hands-page #sh-particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.sacred-hands-page .sh-hero-orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.sacred-hands-page .sh-hero-orb.orb-1 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(122, 158, 110, 0.16), transparent 70%);
+      top: -80px;
+      left: -100px;
+      animation: sh-float 8s ease-in-out infinite;
+    }
+
+    body.sacred-hands-page .sh-hero-orb.orb-2 {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(212, 168, 83, 0.1), transparent 70%);
+      bottom: -40px;
+      right: -60px;
+      animation: sh-float-alt 10s ease-in-out infinite alternate;
+    }
+
+    body.sacred-hands-page .sh-hero-orb.orb-3 {
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(176, 156, 192, 0.1), transparent 70%);
+      top: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: sh-float 6s ease-in-out infinite;
+    }
+
+    body.sacred-hands-page .sh-hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+    }
+
+    body.sacred-hands-page .sh-hero-badge {
+      display: inline-block;
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--sh-border);
+      color: var(--sh-text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+      background: rgba(33, 26, 16, 0.65);
+    }
+
+    body.sacred-hands-page .sh-hero-title {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--sh-text);
+      margin: 0 0 1rem;
+    }
+
+    body.sacred-hands-page .sh-gold-text {
+      background: linear-gradient(135deg, var(--sh-gold-light), var(--sh-gold));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    body.sacred-hands-page .sh-hero-subtitle {
+      color: var(--sh-text-muted);
+      font-size: clamp(1rem, 2.2vw, 1.2rem);
+      margin: 0 0 2rem;
+      line-height: 1.65;
+    }
+
+    body.sacred-hands-page .sh-hero-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    body.sacred-hands-page .sh-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    body.sacred-hands-page .sh-btn-gold {
+      background: linear-gradient(135deg, var(--sh-gold), var(--sh-gold-light));
+      color: #120f08;
+      font-weight: 700;
+      border-radius: 50px;
+      padding: 0.9rem 2rem;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    body.sacred-hands-page .sh-btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px var(--sh-glow-gold);
+    }
+
+    body.sacred-hands-page .sh-btn-outline {
+      border: 1px solid var(--sh-border);
+      color: var(--sh-text);
+      border-radius: 50px;
+      padding: 0.9rem 2rem;
+      background: transparent;
+    }
+
+    body.sacred-hands-page .sh-btn-outline:hover {
+      border-color: var(--sh-amber-light);
+      box-shadow: 0 0 20px var(--sh-glow-amber);
+      color: var(--sh-text);
+    }
+
+    body.sacred-hands-page .sh-section {
+      padding: 6rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    body.sacred-hands-page .sh-section-title {
+      text-align: center;
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      margin-bottom: 0.75rem;
+      color: var(--sh-text);
+    }
+
+    body.sacred-hands-page .sh-section-sub {
+      text-align: center;
+      color: var(--sh-text-muted);
+      margin-bottom: 3rem;
+      font-size: 1.05rem;
+    }
+
+    body.sacred-hands-page .sh-services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    body.sacred-hands-page .sh-flip-card {
+      perspective: 1000px;
+      height: 280px;
+    }
+
+    body.sacred-hands-page .sh-flip-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+
+    body.sacred-hands-page .sh-flip-card:hover .sh-flip-inner {
+      transform: rotateY(180deg);
+    }
+
+    body.sacred-hands-page .sh-flip-front,
+    body.sacred-hands-page .sh-flip-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 16px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    body.sacred-hands-page .sh-flip-front {
+      background: var(--sh-bg-card);
+      border: 1px solid var(--sh-border);
+    }
+
+    body.sacred-hands-page .sh-flip-front:hover {
+      box-shadow: 0 0 28px var(--sh-glow-sage);
+    }
+
+    body.sacred-hands-page .sh-flip-back {
+      background: linear-gradient(135deg, #1c1508, #1a160d);
+      border: 1px solid var(--sh-border-gold);
+      transform: rotateY(180deg);
+    }
+
+    body.sacred-hands-page .sh-flip-front h3,
+    body.sacred-hands-page .sh-flip-back h3 {
+      margin: 0.5rem 0;
+      font-size: 1.15rem;
+    }
+
+    body.sacred-hands-page .sh-flip-front p,
+    body.sacred-hands-page .sh-flip-back p {
+      font-size: 0.92rem;
+      color: var(--sh-text-muted);
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    body.sacred-hands-page .sh-flip-back p {
+      color: var(--sh-text);
+    }
+
+    body.sacred-hands-page .sh-service-icon {
+      font-size: 2.25rem;
+      margin-bottom: 0.25rem;
+    }
+
+    body.sacred-hands-page .sh-pricing-tag {
+      background: var(--sh-bg);
+      border: 1px solid var(--sh-border-gold);
+      color: var(--sh-gold);
+      font-size: 0.85rem;
+      padding: 0.4rem 1rem;
+      border-radius: 50px;
+      margin-top: 1rem;
+    }
+
+    body.sacred-hands-page .sh-hover-hint {
+      font-size: 0.75rem;
+      color: var(--sh-text-muted);
+      margin-top: auto;
+      padding-top: 0.75rem;
+    }
+
+    body.sacred-hands-page .sh-about-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+      align-items: center;
+    }
+
+    @media (min-width: 900px) {
+      body.sacred-hands-page .sh-about-grid {
+        grid-template-columns: 0.95fr 1.05fr;
+      }
+    }
+
+    body.sacred-hands-page .sh-therapist-img {
+      width: 100%;
+      border-radius: 20px;
+      border: 2px solid var(--sh-border-gold);
+      box-shadow: 0 0 40px var(--sh-glow-sage);
+      display: block;
+    }
+
+    body.sacred-hands-page .sh-about-text h2 {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      margin-top: 0;
+    }
+
+    body.sacred-hands-page .sh-about-text p {
+      color: var(--sh-text-muted);
+      line-height: 1.7;
+    }
+
+    body.sacred-hands-page .sh-credentials {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0 0;
+    }
+
+    body.sacred-hands-page .sh-credentials li {
+      padding: 0.35rem 0;
+      color: var(--sh-text);
+    }
+
+    body.sacred-hands-page .sh-testimonial-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    body.sacred-hands-page .sh-testimonial-card {
+      background: var(--sh-bg-card);
+      border: 1px solid var(--sh-border-gold);
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative;
+    }
+
+    body.sacred-hands-page .sh-testimonial-card::before {
+      content: '"';
+      position: absolute;
+      top: 0.5rem;
+      left: 1rem;
+      font-size: 4rem;
+      line-height: 1;
+      font-family: Georgia, serif;
+      color: var(--sh-amber-light);
+      opacity: 0.2;
+      pointer-events: none;
+    }
+
+    body.sacred-hands-page .sh-stars {
+      color: var(--sh-gold-light);
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    body.sacred-hands-page .sh-testimonial-text {
+      font-style: italic;
+      color: var(--sh-text);
+      line-height: 1.65;
+      margin: 0 0 1rem;
+    }
+
+    body.sacred-hands-page .sh-testimonial-author {
+      color: var(--sh-text-muted);
+      font-size: 0.9rem;
+    }
+
+    body.sacred-hands-page .sh-review-form {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    body.sacred-hands-page .sh-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 540px) {
+      body.sacred-hands-page .sh-form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body.sacred-hands-page .sh-input {
+      background: var(--sh-bg-card);
+      border: 1px solid var(--sh-border);
+      border-radius: 10px;
+      padding: 0.9rem 1.2rem;
+      color: var(--sh-text);
+      font-size: 1rem;
+      width: 100%;
+      outline: none;
+      font-family: inherit;
+    }
+
+    body.sacred-hands-page .sh-input:focus {
+      border-color: var(--sh-amber-light);
+      box-shadow: 0 0 12px var(--sh-glow-amber);
+    }
+
+    body.sacred-hands-page .sh-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    body.sacred-hands-page .sh-star-picker {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--sh-text-muted);
+    }
+
+    body.sacred-hands-page .sh-star-btn {
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: var(--sh-text-muted);
+      transition: color 0.2s;
+      line-height: 1;
+      user-select: none;
+    }
+
+    body.sacred-hands-page .sh-star-btn.active {
+      color: var(--sh-gold-light);
+    }
+
+    body.sacred-hands-page .sh-contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: stretch;
+    }
+
+    @media (max-width: 800px) {
+      body.sacred-hands-page .sh-contact-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    body.sacred-hands-page .sh-contact-info {
+      background: var(--sh-bg-card);
+      border: 1px solid var(--sh-border);
+      border-radius: 16px;
+      padding: 2rem;
+    }
+
+    body.sacred-hands-page .sh-contact-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--sh-border);
+    }
+
+    body.sacred-hands-page .sh-contact-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    body.sacred-hands-page .sh-contact-item:first-child {
+      padding-top: 0;
+    }
+
+    body.sacred-hands-page .sh-contact-item span:first-child {
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    body.sacred-hands-page .sh-contact-item strong {
+      display: block;
+      color: var(--sh-text);
+      margin-bottom: 0.25rem;
+    }
+
+    body.sacred-hands-page .sh-contact-item p {
+      margin: 0;
+      color: var(--sh-text-muted);
+    }
+
+    body.sacred-hands-page .sh-contact-item a {
+      color: var(--sh-lavender);
+      text-decoration: none;
+    }
+
+    body.sacred-hands-page .sh-contact-item a:hover {
+      color: var(--sh-gold-light);
+    }
+
+    body.sacred-hands-page .sh-booking-cta {
+      background: linear-gradient(135deg, #1c1508, #1a160d);
+      border: 1px solid var(--sh-border-gold);
+      border-radius: 16px;
+      padding: 2.5rem;
+      text-align: center;
+    }
+
+    body.sacred-hands-page .sh-booking-cta h3 {
+      margin-top: 0;
+      font-family: 'Orbitron', monospace;
+    }
+
+    body.sacred-hands-page .sh-booking-cta p {
+      color: var(--sh-text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    body.sacred-hands-page .sh-floating-book {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 9999;
+      background: linear-gradient(135deg, var(--sh-gold), var(--sh-gold-light));
+      color: #120f08;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 0.85rem 1.6rem;
+      border-radius: 50px;
+      box-shadow: 0 4px 24px var(--sh-glow-gold);
+      text-decoration: none;
+      transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    body.sacred-hands-page .sh-floating-book.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    body.sacred-hands-page .sh-floating-book:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px var(--sh-glow-gold);
+    }
+
+    body.sacred-hands-page .sh-floating-book.visible:hover {
+      transform: translateY(-3px);
+    }
+
+    body.sacred-hands-page .sh-footer {
+      background: #0a0805;
+      text-align: center;
+      padding: 2.5rem 2rem;
+      border-top: 1px solid var(--sh-border);
+    }
+
+    body.sacred-hands-page .sh-footer p {
+      margin: 0;
+    }
+
+    body.sacred-hands-page .sh-footer a:hover {
+      color: var(--sh-amber-light) !important;
+    }
+
+    body.sacred-hands-page .sh-readings-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    body.sacred-hands-page .sh-readings-header .sh-section-sub {
+      margin-bottom: 0;
+    }
+
+    body.sacred-hands-page .sh-readings-badge {
+      display: inline-block;
+      background: rgba(176, 156, 192, 0.12);
+      border: 1px solid rgba(176, 156, 192, 0.3);
+      color: var(--sh-lavender);
+      font-size: 0.85rem;
+      padding: 0.35rem 1rem;
+      border-radius: 50px;
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    body.sacred-hands-page .sh-readings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    body.sacred-hands-page .sh-reading-card {
+      background: var(--sh-bg-card);
+      border: 1px solid var(--sh-border-sage);
+      border-radius: 18px;
+      padding: 2.2rem;
+      position: relative;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    body.sacred-hands-page .sh-reading-card:hover {
+      border-color: var(--sh-sage);
+      box-shadow: 0 0 32px var(--sh-glow-sage);
+      transform: translateY(-4px);
+    }
+
+    body.sacred-hands-page .sh-reading-card.sh-reading-featured {
+      border-color: var(--sh-border-gold);
+      background: linear-gradient(160deg, #261e0e, #1c1508);
+    }
+
+    body.sacred-hands-page .sh-reading-card.sh-reading-featured:hover {
+      border-color: var(--sh-gold);
+      box-shadow: 0 0 32px var(--sh-glow-amber);
+    }
+
+    body.sacred-hands-page .sh-reading-badge-corner {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: linear-gradient(135deg, var(--sh-gold), var(--sh-gold-light));
+      color: #120f08;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.3rem 0.8rem;
+      border-radius: 50px;
+    }
+
+    body.sacred-hands-page .sh-reading-icon {
+      font-size: 2.5rem;
+    }
+
+    body.sacred-hands-page .sh-reading-card h3 {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.1rem;
+      color: var(--sh-text);
+    }
+
+    body.sacred-hands-page .sh-reading-card p {
+      color: var(--sh-text-muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    body.sacred-hands-page .sh-reading-options {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    body.sacred-hands-page .sh-reading-options li {
+      color: var(--sh-text);
+      font-size: 0.9rem;
+    }
+
+    body.sacred-hands-page .sh-readings-cta {
+      text-align: center;
+      padding: 2rem;
+      border: 1px solid var(--sh-border);
+      border-radius: 16px;
+      background: var(--sh-bg-card);
+    }
+
+    body.sacred-hands-page .sh-readings-cta p {
+      color: var(--sh-text-muted);
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body class="sacred-hands-page">
+  <header class="sh-header">
+    <nav class="sh-nav">
+      <a href="massage.html" class="sh-logo">🌙 Sacred Hands</a>
+      <ul class="sh-nav-links">
+        <li><a href="#sh-services">Services</a></li>
+        <li><a href="#sh-readings">Readings</a></li>
+        <li><a href="#sh-about">About</a></li>
+        <li><a href="#sh-testimonials">Reviews</a></li>
+        <li><a href="#sh-contact">Book</a></li>
+        <li><a href="index.html" class="sh-nav-back">← Portfolio</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section class="sh-hero" id="sh-home">
+    <canvas id="sh-particles"></canvas>
+    <div class="sh-hero-orb orb-1"></div>
+    <div class="sh-hero-orb orb-2"></div>
+    <div class="sh-hero-orb orb-3"></div>
+    <div class="sh-hero-content">
+      <div class="sh-hero-badge">🌙 Chillicothe, Ohio</div>
+      <h1 class="sh-hero-title">Sacred Hands<br><span class="sh-gold-text">by Mike</span></h1>
+      <p class="sh-hero-subtitle">Professional massage therapy bringing healing, balance, and sacred restoration to your body and mind.</p>
+      <div class="sh-hero-btns">
+        <a href="https://form.jotform.com/251873720824056" target="_blank" rel="noopener noreferrer" class="sh-btn sh-btn-gold">📅 Book a Session</a>
+        <a href="tel:740-656-8044" class="sh-btn sh-btn-outline">📞 Call Mike</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sh-section" id="sh-services">
+    <h2 class="sh-section-title">✨ <span class="sh-gold-text">Massage Services</span></h2>
+    <p class="sh-section-sub">Each session is tailored to your unique needs — mind, body, and spirit.</p>
+    <div class="sh-services-grid">
+      <div class="sh-flip-card">
+        <div class="sh-flip-inner">
+          <div class="sh-flip-front">
+            <div class="sh-service-icon">💪</div>
+            <h3>Deep Tissue Massage</h3>
+            <p>Targets deep muscle layers to treat chronic pain, stiffness, and knots.</p>
+            <span class="sh-hover-hint">Hover for details →</span>
+          </div>
+          <div class="sh-flip-back">
+            <h3>Deep Tissue Massage</h3>
+            <p>Uses firm pressure and slow strokes to reach deeper muscle tissue. Ideal for chronic aches, injury recovery, and serious tension release.</p>
+            <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+            <a href="#sh-contact" class="sh-btn sh-btn-gold" style="margin-top:1rem; font-size:0.85rem; padding: 0.6rem 1.4rem;">Book This</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-flip-card">
+        <div class="sh-flip-inner">
+          <div class="sh-flip-front">
+            <div class="sh-service-icon">🧘</div>
+            <h3>Full Body Therapeutic</h3>
+            <p>Balanced, full-body work to ease tension, improve mobility, and restore calm.</p>
+            <span class="sh-hover-hint">Hover for details →</span>
+          </div>
+          <div class="sh-flip-back">
+            <h3>Full Body Therapeutic</h3>
+            <p>Integrates flowing and focused techniques across all major muscle groups. Great for stress relief, athletic recovery, and maintaining overall wellness.</p>
+            <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+            <a href="#sh-contact" class="sh-btn sh-btn-gold" style="margin-top:1rem; font-size:0.85rem; padding: 0.6rem 1.4rem;">Book This</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-flip-card">
+        <div class="sh-flip-inner">
+          <div class="sh-flip-front">
+            <div class="sh-service-icon">🌸</div>
+            <h3>Light Body Massage</h3>
+            <p>Gentle, relaxing strokes to soothe the nervous system and melt stress away.</p>
+            <span class="sh-hover-hint">Hover for details →</span>
+          </div>
+          <div class="sh-flip-back">
+            <h3>Light Body Massage</h3>
+            <p>Uses lighter pressure and rhythmic movement to promote circulation and deep relaxation—perfect when you need rest, not intense work.</p>
+            <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+            <a href="#sh-contact" class="sh-btn sh-btn-gold" style="margin-top:1rem; font-size:0.85rem; padding: 0.6rem 1.4rem;">Book This</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-flip-card">
+        <div class="sh-flip-inner">
+          <div class="sh-flip-front">
+            <div class="sh-service-icon">🔧</div>
+            <h3>Massage Gun Therapy</h3>
+            <p>Targeted percussion to loosen tight spots and support faster muscle recovery.</p>
+            <span class="sh-hover-hint">Hover for details →</span>
+          </div>
+          <div class="sh-flip-back">
+            <h3>Massage Gun Therapy</h3>
+            <p>Focused percussive therapy on specific areas of tension—often combined with hands-on work for a powerful one-two punch against knots and fatigue.</p>
+            <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+            <a href="#sh-contact" class="sh-btn sh-btn-gold" style="margin-top:1rem; font-size:0.85rem; padding: 0.6rem 1.4rem;">Book This</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-flip-card">
+        <div class="sh-flip-inner">
+          <div class="sh-flip-front">
+            <div class="sh-service-icon">✨</div>
+            <h3>Custom Sessions</h3>
+            <p>Your goals, your pace—blended techniques built around what your body needs.</p>
+            <span class="sh-hover-hint">Hover for details →</span>
+          </div>
+          <div class="sh-flip-back">
+            <h3>Custom Sessions</h3>
+            <p>We mix modalities—deep tissue where you need it, lighter work elsewhere, add-ons like massage gun or extra focus time—so every minute supports your goals.</p>
+            <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+            <a href="#sh-contact" class="sh-btn sh-btn-gold" style="margin-top:1rem; font-size:0.85rem; padding: 0.6rem 1.4rem;">Book This</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh-flip-card">
+        <div class="sh-flip-inner">
+          <div class="sh-flip-front">
+            <div class="sh-service-icon">🚗</div>
+            <h3>In-Home &amp; Travel</h3>
+            <p>Professional massage brought to your home, hotel, or location in the area.</p>
+            <span class="sh-hover-hint">Hover for details →</span>
+          </div>
+          <div class="sh-flip-back">
+            <h3>In-Home &amp; Travel</h3>
+            <p>Skip the drive home after your session—I bring the table, supplies, and calm energy to you. Ideal for busy schedules, limited mobility, or maximum privacy.</p>
+            <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+            <a href="#sh-contact" class="sh-btn sh-btn-gold" style="margin-top:1rem; font-size:0.85rem; padding: 0.6rem 1.4rem;">Book This</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Readings & Meditation Section -->
+  <section class="sh-section" id="sh-readings">
+    <div class="sh-readings-header">
+      <span class="sh-readings-badge">🔮 New Offering</span>
+      <h2 class="sh-section-title">Readings & <span class="sh-gold-text">Meditation</span></h2>
+      <p class="sh-section-sub">Beyond the physical — sacred guidance for the mind, spirit, and soul.</p>
+    </div>
+
+    <div class="sh-readings-grid">
+
+      <div class="sh-reading-card">
+        <div class="sh-reading-icon">🃏</div>
+        <h3>Tarot Card Reading</h3>
+        <p>Gain clarity, insight, and spiritual guidance through the ancient art of tarot. Whether you're navigating a crossroads, seeking answers, or simply curious about the path ahead — the cards reveal what's ready to be seen.</p>
+        <ul class="sh-reading-options">
+          <li>🌙 Single Card Pull — Quick daily guidance</li>
+          <li>🌙 Three-Card Spread — Past · Present · Future</li>
+          <li>🌙 Full Reading — Deep dive into your journey</li>
+        </ul>
+        <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+      </div>
+
+      <div class="sh-reading-card sh-reading-featured">
+        <div class="sh-reading-badge-corner">✨ Popular</div>
+        <div class="sh-reading-icon">🧘</div>
+        <h3>Guided Meditation Session</h3>
+        <p>Step away from the noise and drop into stillness. Personalized guided meditation sessions designed to reduce anxiety, deepen self-awareness, and reconnect you to your inner calm — in person or remotely.</p>
+        <ul class="sh-reading-options">
+          <li>🌿 Breathwork & Grounding</li>
+          <li>🌿 Visualization & Manifestation</li>
+          <li>🌿 Stress Release & Mind Clearing</li>
+        </ul>
+        <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+      </div>
+
+      <div class="sh-reading-card">
+        <div class="sh-reading-icon">🌀</div>
+        <h3>Intuitive Spiritual Guidance</h3>
+        <p>Combining intuitive insight with a grounded, compassionate presence. These sessions blend elements of tarot, meditation, and energetic awareness to help you process, heal, and move forward with purpose.</p>
+        <ul class="sh-reading-options">
+          <li>💫 Energy Clearing Conversations</li>
+          <li>💫 Life Path Reflection</li>
+          <li>💫 Combined Tarot + Meditation</li>
+        </ul>
+        <div class="sh-pricing-tag">📞 Contact for Pricing</div>
+      </div>
+
+    </div>
+
+    <div class="sh-readings-cta">
+      <p>Sessions available in-person in Chillicothe, Ohio or remotely via video call.</p>
+      <a href="https://form.jotform.com/251873720824056" target="_blank" class="sh-btn sh-btn-gold" rel="noopener noreferrer">Book a Reading</a>
+    </div>
+  </section>
+
+  <section class="sh-section sh-about" id="sh-about">
+    <div class="sh-about-grid">
+      <div class="sh-about-photo">
+        <img src="SHPHOTO.JPG" alt="Mike - Licensed Massage Therapist" class="sh-therapist-img" />
+      </div>
+      <div class="sh-about-text">
+        <h2>About <span class="sh-gold-text">Mike</span></h2>
+        <p>Welcome to Sacred Hands! I'm Mike, a passionate massage therapist dedicated to bringing healing and relaxation directly to you. With specialized training in various massage techniques, I believe in creating a sacred space for wellness wherever you are most comfortable.</p>
+        <p>My approach combines professional expertise with a personal touch, ensuring each session is tailored to your specific needs — whether you're dealing with chronic pain, stress, or simply need to unwind.</p>
+        <ul class="sh-credentials">
+          <li>✓ Licensed Massage Therapist</li>
+          <li>✓ Deep Tissue Specialist</li>
+          <li>✓ Therapeutic Massage Certified</li>
+          <li>✓ Continuing Education in Pain Management</li>
+          <li>✓ Fully Insured &amp; Bonded</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sh-section" id="sh-testimonials">
+    <h2 class="sh-section-title">💬 <span class="sh-gold-text">What Clients Say</span></h2>
+    <div class="sh-testimonial-grid" id="sh-reviews-grid">
+      <div class="sh-testimonial-card">
+        <div class="sh-stars">⭐⭐⭐⭐⭐</div>
+        <p class="sh-testimonial-text">"Mike's deep tissue massage was exactly what I needed for my chronic back pain. He really knows how to target problem areas and I felt immediate relief!"</p>
+        <div class="sh-testimonial-author">— Sarah M.</div>
+      </div>
+      <div class="sh-testimonial-card">
+        <div class="sh-stars">⭐⭐⭐⭐⭐</div>
+        <p class="sh-testimonial-text">"The convenience of having a professional massage at home is incredible. Mike is punctual, professional, and his therapeutic touch is amazing."</p>
+        <div class="sh-testimonial-author">— John D.</div>
+      </div>
+      <div class="sh-testimonial-card">
+        <div class="sh-stars">⭐⭐⭐⭐⭐</div>
+        <p class="sh-testimonial-text">"I was skeptical about in-home massage, but Mike made me feel completely comfortable. The light body massage was perfect for my stress relief needs."</p>
+        <div class="sh-testimonial-author">— Lisa K.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sh-section sh-review-section">
+    <h2 class="sh-section-title">✍️ <span class="sh-gold-text">Leave a Review</span></h2>
+    <p class="sh-section-sub">Had a session with Mike? Share your experience below!</p>
+    <form class="sh-review-form" id="sh-review-form">
+      <div class="sh-form-row">
+        <input type="text" name="reviewer_name" placeholder="Your Name" class="sh-input" required />
+        <input type="text" name="service" placeholder="Service Received" class="sh-input" />
+      </div>
+      <div class="sh-star-picker" id="sh-star-picker">
+        <span>Your Rating:</span>
+        <span class="sh-star-btn" data-val="1" role="button" tabindex="0">★</span>
+        <span class="sh-star-btn" data-val="2" role="button" tabindex="0">★</span>
+        <span class="sh-star-btn" data-val="3" role="button" tabindex="0">★</span>
+        <span class="sh-star-btn" data-val="4" role="button" tabindex="0">★</span>
+        <span class="sh-star-btn" data-val="5" role="button" tabindex="0">★</span>
+      </div>
+      <textarea class="sh-input sh-textarea" name="review_body" placeholder="Tell others about your experience..." required></textarea>
+      <button type="submit" class="sh-btn sh-btn-gold">Submit Review</button>
+    </form>
+    <div id="sh-review-thanks" style="display:none; text-align:center; color: var(--sh-gold-light); padding: 2rem;">
+      ✨ Thank you for your review! It means the world.
+    </div>
+  </section>
+
+  <section class="sh-section sh-contact" id="sh-contact">
+    <h2 class="sh-section-title">📅 <span class="sh-gold-text">Book a Session</span></h2>
+    <div class="sh-contact-grid">
+      <div class="sh-contact-info">
+        <div class="sh-contact-item"><span>📱</span><div><strong>Phone / Text</strong><p><a href="tel:740-656-8044">740-656-8044</a></p></div></div>
+        <div class="sh-contact-item"><span>📧</span><div><strong>Email</strong><p><a href="mailto:mike@starktechstudios.com">mike@starktechstudios.com</a></p></div></div>
+        <div class="sh-contact-item"><span>📍</span><div><strong>Service Area</strong><p>Chillicothe, Ohio &amp; Surrounding Areas</p></div></div>
+        <div class="sh-contact-item"><span>🚗</span><div><strong>I Come to You</strong><p>In-home appointments available</p></div></div>
+      </div>
+      <div class="sh-booking-cta">
+        <h3>Ready to Feel Amazing?</h3>
+        <p>Book your session online or reach out directly — I'll get back to you fast.</p>
+        <a href="https://form.jotform.com/251873720824056" target="_blank" rel="noopener noreferrer" class="sh-btn sh-btn-gold" style="display:block; text-align:center; margin-bottom:1rem;">📅 Book Online with JotForm</a>
+        <a href="tel:740-656-8044" class="sh-btn sh-btn-outline" style="display:block; text-align:center;">📞 Call / Text Mike</a>
+      </div>
+    </div>
+  </section>
+
+  <a href="https://form.jotform.com/251873720824056" target="_blank" rel="noopener noreferrer" class="sh-floating-book" id="sh-floating-book">
+    📅 Book Now
+  </a>
+
+  <footer class="sh-footer">
+    <p>🌙 Sacred Hands by Mike &nbsp;|&nbsp; Licensed Massage Therapist &nbsp;|&nbsp; Chillicothe, Ohio</p>
+    <p style="margin-top: 0.5rem; color: var(--sh-text-muted); font-size: 0.85rem;">Licensed · Insured · Dedicated to Your Wellness</p>
+    <p style="margin-top:1rem;"><a href="index.html" style="color: var(--sh-text-muted); font-size:0.85rem;">← Back to Portfolio</a></p>
+  </footer>
+
+  <script>
+    const shCanvas = document.getElementById('sh-particles');
+    const shCtx = shCanvas.getContext('2d');
+    shCanvas.width = window.innerWidth;
+    shCanvas.height = window.innerHeight;
+    const shParticles = Array.from({ length: 80 }, () => ({
+      x: Math.random() * shCanvas.width,
+      y: Math.random() * shCanvas.height,
+      r: Math.random() * 1.5 + 0.3,
+      dx: (Math.random() - 0.5) * 0.3,
+      dy: (Math.random() - 0.5) * 0.3,
+      alpha: Math.random() * 0.5 + 0.1
+    }));
+    function animateSHParticles() {
+      shCtx.clearRect(0, 0, shCanvas.width, shCanvas.height);
+      shParticles.forEach(p => {
+        shCtx.beginPath();
+        shCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        shCtx.fillStyle = `rgba(196, 168, 140, ${p.alpha})`;
+        shCtx.fill();
+        p.x += p.dx;
+        p.y += p.dy;
+        if (p.x < 0 || p.x > shCanvas.width) p.dx *= -1;
+        if (p.y < 0 || p.y > shCanvas.height) p.dy *= -1;
+      });
+      requestAnimationFrame(animateSHParticles);
+    }
+    animateSHParticles();
+    window.addEventListener('resize', () => {
+      shCanvas.width = window.innerWidth;
+      shCanvas.height = window.innerHeight;
+    });
+
+    const shFloatingBtn = document.getElementById('sh-floating-book');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) shFloatingBtn.classList.add('visible');
+      else shFloatingBtn.classList.remove('visible');
+    });
+
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://dffmhlknxqrfzcdquizx.supabase.co',
+      'sb_publishable_muLaXePIzNokUa-MArFezg__VOVYJmm'
+    );
+
+    // ── Star picker ──
+    const starBtns = document.querySelectorAll('.sh-star-btn');
+    let selectedRating = 0;
+    starBtns.forEach(btn => {
+      btn.addEventListener('mouseover', () => {
+        starBtns.forEach(b => b.classList.remove('active'));
+        for (let i = 0; i < btn.dataset.val; i++) starBtns[i].classList.add('active');
+      });
+      btn.addEventListener('mouseleave', () => {
+        starBtns.forEach((b, i) => b.classList.toggle('active', i < selectedRating));
+      });
+      btn.addEventListener('click', () => { selectedRating = Number(btn.dataset.val); });
+    });
+
+    // ── Load approved reviews ──
+    async function loadSacredHandsReviews() {
+      const { data, error } = await sb
+        .from('reviews')
+        .select('*')
+        .eq('page', 'sacredhands')
+        .eq('approved', true)
+        .order('created_at', { ascending: false });
+
+      if (error || !data || data.length === 0) return;
+
+      const grid = document.getElementById('sh-reviews-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      data.forEach(review => {
+        const stars = '⭐'.repeat(review.rating);
+        grid.innerHTML += `
+          <div class="sh-testimonial-card">
+            <div class="sh-stars">${stars}</div>
+            <p class="sh-testimonial-text">"${review.review_text}"</p>
+            <div class="sh-testimonial-author">— ${review.name}
+              <span style="font-size:0.8rem; color: var(--sh-text-muted); font-weight:400; margin-left:0.5rem;">${review.service || ''}</span>
+            </div>
+          </div>`;
+      });
+    }
+    loadSacredHandsReviews();
+
+    // ── Submit review ──
+    document.getElementById('sh-review-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const name = form.querySelector('input[placeholder="Your Name"]').value;
+      const service = form.querySelector('input[placeholder="Service Received"]').value;
+      const review_text = form.querySelector('textarea').value;
+
+      const { error } = await sb.from('reviews').insert([{
+        name,
+        service,
+        rating: selectedRating || 5,
+        review_text,
+        page: 'sacredhands',
+        approved: false
+      }]);
+
+      if (!error) {
+        document.getElementById('sh-review-form').style.display = 'none';
+        document.getElementById('sh-review-thanks').style.display = 'block';
+      } else {
+        alert('Something went wrong. Please try again.');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testimonials | Mike Butcher – Stark Tech Studios</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Sticky Logo Nav -->
+  <nav class="sticky-nav" id="stickyNav">
+    <div class="nav-brand">
+      <img src="STS.png" alt="StarkTech Studios" class="nav-logo-img" onerror="this.style.display='none'" />
+      <span class="nav-brand-name">StarkTech Studios</span>
+    </div>
+    <div class="nav-menu" id="navMenu">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="about.html" class="nav-link">About</a>
+      <a href="skills.html" class="nav-link">Skills</a>
+      <a href="services.html" class="nav-link">Services</a>
+      <a href="projects.html" class="nav-link">Projects</a>
+      <a href="videos.html" class="nav-link">Videos</a>
+      <a href="testimonials.html" class="nav-link">Testimonials</a>
+      <a href="massage.html" class="nav-link">Sacred Hands</a>
+      <a href="#contact" class="nav-link">Contact</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Open menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="mobile-link">Home</a>
+    <a href="about.html" class="mobile-link">About</a>
+    <a href="skills.html" class="mobile-link">Skills</a>
+    <a href="services.html" class="mobile-link">Services</a>
+    <a href="projects.html" class="mobile-link">Projects</a>
+    <a href="videos.html" class="mobile-link">Videos</a>
+    <a href="testimonials.html" class="mobile-link">Testimonials</a>
+    <a href="massage.html" class="mobile-link">Sacred Hands</a>
+    <a href="#contact" class="mobile-link">Contact</a>
+  </div>
+
+  <!-- PAGE HERO -->
+  <section class="page-hero">
+    <div class="page-hero-content">
+      <span class="page-hero-badge">⭐ Real Words from Real People</span>
+      <h1 class="page-hero-title">Client <span class="accent-text">Testimonials</span></h1>
+      <p class="page-hero-sub">What the people I've worked with, healed, and built for have to say.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 2 — Web & Tech placeholders -->
+  <section class="testi-section testi-section-alt">
+    <div class="testi-container">
+
+      <div class="testi-category-header">
+        <span class="testi-category-badge">💻 Web Development & Tech Work</span>
+        <h2 class="testi-section-title">Developer <span style="color: var(--accent);">Testimonials</span></h2>
+        <p class="testi-section-sub">From clients and colleagues on web projects, AI tools, and technical work.</p>
+      </div>
+
+      <div class="testi-grid" id="starktech-reviews-grid">
+
+        <div class="testi-card testi-card-placeholder">
+          <div class="testi-placeholder-icon">💬</div>
+          <p class="testi-placeholder-text">A testimonial from a web development client will appear here soon.</p>
+          <div class="testi-placeholder-label">— Web Client</div>
+        </div>
+
+        <div class="testi-card testi-card-placeholder">
+          <div class="testi-placeholder-icon">💬</div>
+          <p class="testi-placeholder-text">A testimonial from an Equitas Health colleague will appear here soon.</p>
+          <div class="testi-placeholder-label">— Equitas Health</div>
+        </div>
+
+        <div class="testi-card testi-card-placeholder">
+          <div class="testi-placeholder-icon">💬</div>
+          <p class="testi-placeholder-text">More client feedback coming as projects are completed and reviewed.</p>
+          <div class="testi-placeholder-label">— Coming Soon</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBMIT A TESTIMONIAL SECTION -->
+  <section class="testi-section" id="contact">
+    <div class="testi-container">
+      <div class="testi-category-header">
+        <h2 class="testi-section-title">Leave a <span style="color: var(--accent);">Review</span></h2>
+        <p class="testi-section-sub">Worked with me? I'd love to hear from you.</p>
+      </div>
+      <form class="testi-form" id="testi-form">
+        <div class="testi-form-row">
+          <input type="text" placeholder="Your Name" class="testi-input" required>
+          <input type="text" placeholder="Service or Project" class="testi-input">
+        </div>
+        <div class="testi-star-picker" id="testi-star-picker">
+          <span style="color: var(--text-muted); font-size: 0.9rem;">Your Rating:</span>
+          <span class="testi-star-btn" data-val="1">★</span>
+          <span class="testi-star-btn" data-val="2">★</span>
+          <span class="testi-star-btn" data-val="3">★</span>
+          <span class="testi-star-btn" data-val="4">★</span>
+          <span class="testi-star-btn" data-val="5">★</span>
+        </div>
+        <textarea class="testi-input testi-textarea" placeholder="Share your experience..." required></textarea>
+        <button type="submit" class="btn btn-primary" style="align-self: flex-start; padding: 0.85rem 2.5rem;">Submit Review</button>
+      </form>
+      <div id="testi-thanks" style="display:none; text-align:center; color: var(--accent); padding: 2rem; font-family: 'Orbitron', monospace;">
+        ✨ Thank you! Your review means everything.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 Mike Butcher | StarkTech Studios. All rights reserved. | Built with ❤️ and clean code.</p>
+  </footer>
+
+  <script>
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://dffmhlknxqrfzcdquizx.supabase.co',
+      'sb_publishable_muLaXePIzNokUa-MArFezg__VOVYJmm'
+    );
+
+    // ── Star picker ──
+    const testiBtns = document.querySelectorAll('.testi-star-btn');
+    let testiRating = 0;
+    testiBtns.forEach(btn => {
+      btn.addEventListener('mouseover', () => {
+        testiBtns.forEach(b => b.classList.remove('active'));
+        for (let i = 0; i < btn.dataset.val; i++) testiBtns[i].classList.add('active');
+      });
+      btn.addEventListener('mouseleave', () => {
+        testiBtns.forEach((b, i) => b.classList.toggle('active', i < testiRating));
+      });
+      btn.addEventListener('click', () => { testiRating = Number(btn.dataset.val); });
+    });
+
+    // ── Load approved reviews ──
+    async function loadStackTechReviews() {
+      const { data, error } = await sb
+        .from('reviews')
+        .select('*')
+        .eq('page', 'starktech')
+        .eq('approved', true)
+        .order('created_at', { ascending: false });
+
+      if (error || !data || data.length === 0) return;
+
+      const grid = document.getElementById('starktech-reviews-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      data.forEach(review => {
+        const stars = '⭐'.repeat(review.rating);
+        const initial = review.name.charAt(0).toUpperCase();
+        grid.innerHTML += `
+          <div class="testi-card">
+            <div class="testi-stars">${stars}</div>
+            <p class="testi-quote">"${review.review_text}"</p>
+            <div class="testi-author-row">
+              <div class="testi-avatar">${initial}</div>
+              <div>
+                <div class="testi-name">${review.name}</div>
+                <div class="testi-service">${review.service || 'Web Development'}</div>
+              </div>
+            </div>
+          </div>`;
+      });
+    }
+    loadStackTechReviews();
+
+    // ── Submit review ──
+    document.getElementById('testi-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const name = form.querySelector('input[placeholder="Your Name"]').value;
+      const service = form.querySelector('input[placeholder="Service or Project"]').value;
+      const review_text = form.querySelector('textarea').value;
+
+      const { error } = await sb.from('reviews').insert([{
+        name,
+        service,
+        rating: testiRating || 5,
+        review_text,
+        page: 'starktech',
+        approved: false
+      }]);
+
+      if (!error) {
+        document.getElementById('testi-form').style.display = 'none';
+        document.getElementById('testi-thanks').style.display = 'block';
+      } else {
+        alert('Something went wrong. Please try again.');
+      }
+    });
+  </script>
+
+  <script src="Portfolio.js"></script>
+</body>
+</html>
