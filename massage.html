@@ -33,6 +33,7 @@
       --sh-lavender: #b09cc0;
       --sh-gold: #d4a853;
       --sh-gold-light: #ecc97a;
+      --sh-gold-dim: rgba(212, 168, 83, 0.08);
       --sh-glow-amber: rgba(196, 146, 74, 0.22);
       --sh-glow-sage: rgba(122, 158, 110, 0.2);
       --sh-glow-lavender: rgba(176, 156, 192, 0.2);
@@ -839,6 +840,39 @@
       color: var(--sh-text-muted);
       margin-bottom: 1.5rem;
     }
+
+    .sh-btn-google-review {
+      display: block;
+      text-align: center;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--sh-text);
+      padding: 0.85rem 2rem;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin-top: 0.75rem;
+    }
+    .sh-btn-google-review:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+    }
+
+    .sh-google-review-prompt {
+      text-align: center;
+      padding: 1.5rem;
+      border: 1px dashed var(--sh-border-gold);
+      border-radius: 14px;
+      background: var(--sh-gold-dim);
+      margin-bottom: 2.5rem;
+    }
+    .sh-google-review-prompt p {
+      color: var(--sh-text-muted);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body class="sacred-hands-page">
@@ -1085,6 +1119,12 @@
   <section class="sh-section sh-review-section">
     <h2 class="sh-section-title">✍️ <span class="sh-gold-text">Leave a Review</span></h2>
     <p class="sh-section-sub">Had a session with Mike? Share your experience below!</p>
+    <div class="sh-google-review-prompt">
+      <p>Prefer to leave a Google review? It helps more than you know.</p>
+      <a href="https://g.page/r/CTi0kHtGDLWLEAI/review" target="_blank" rel="noopener noreferrer" class="sh-btn sh-btn-google-review">
+        ⭐ Review Sacred Hands on Google
+      </a>
+    </div>
     <form class="sh-review-form" id="sh-review-form">
       <div class="sh-form-row">
         <input type="text" name="reviewer_name" placeholder="Your Name" class="sh-input" required />
@@ -1119,6 +1159,9 @@
         <h3>Ready to Feel Amazing?</h3>
         <p>Book your session online or reach out directly — I'll get back to you fast.</p>
         <a href="https://form.jotform.com/251873720824056" target="_blank" rel="noopener noreferrer" class="sh-btn sh-btn-gold" style="display:block; text-align:center; margin-bottom:1rem;">📅 Book Online with JotForm</a>
+        <a href="https://g.page/r/CTi0kHtGDLWLEAI/review" target="_blank" rel="noopener noreferrer" class="sh-btn sh-btn-google-review">
+          ⭐ Leave a Google Review
+        </a>
         <a href="tel:740-656-8044" class="sh-btn sh-btn-outline" style="display:block; text-align:center;">📞 Call / Text Mike</a>
       </div>
     </div>

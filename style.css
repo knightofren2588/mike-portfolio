@@ -564,6 +564,39 @@
     transform: translateY(-2px);
   }
 
+  .btn-google-review {
+    display: inline-block;
+    text-align: center;
+    background: transparent;
+    border: 1px solid var(--border-gold);
+    color: var(--gold);
+    padding: 0.75rem 1.75rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: var(--transition);
+    margin-top: 0.75rem;
+  }
+  .btn-google-review:hover {
+    background: var(--gold-dim);
+    box-shadow: var(--glow-gold);
+  }
+
+  .google-review-prompt {
+    text-align: center;
+    padding: 1.5rem;
+    border: 1px dashed var(--border-gold);
+    border-radius: var(--radius);
+    background: var(--gold-dim);
+    margin-bottom: 2.5rem;
+  }
+  .google-review-prompt p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+  }
+
   .btn-arrow {
     transition: transform 0.3s ease;
   }
