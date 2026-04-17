@@ -123,6 +123,42 @@
       gap: 1.25rem;
     }
 
+    body.sacred-hands-page .sh-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 0.5rem;
+      background: none;
+      border: none;
+    }
+    body.sacred-hands-page .sh-hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--sh-text);
+      border-radius: 2px;
+      transition: all 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      body.sacred-hands-page .sh-hamburger { display: flex; }
+      body.sacred-hands-page .sh-nav-links { display: none; }
+      body.sacred-hands-page .sh-nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: rgba(18, 15, 8, 0.97);
+        padding: 1.5rem 2rem;
+        gap: 1.25rem;
+        border-bottom: 1px solid var(--sh-border);
+        z-index: 999;
+      }
+    }
+
     body.sacred-hands-page .sh-nav-links a {
       color: var(--sh-text-muted);
       text-decoration: none;
@@ -806,6 +842,7 @@
   </style>
 </head>
 <body class="sacred-hands-page">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <header class="sh-header">
     <nav class="sh-nav">
       <a href="massage.html" class="sh-logo">🌙 Sacred Hands</a>
@@ -817,10 +854,15 @@
         <li><a href="#sh-contact">Book</a></li>
         <li><a href="index.html" class="sh-nav-back">← Portfolio</a></li>
       </ul>
+      <button class="sh-hamburger" id="sh-hamburger" type="button" aria-label="Toggle navigation menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </nav>
   </header>
 
-  <section class="sh-hero" id="sh-home">
+  <section class="sh-hero" id="main-content" role="main">
     <canvas id="sh-particles"></canvas>
     <div class="sh-hero-orb orb-1"></div>
     <div class="sh-hero-orb orb-2"></div>
@@ -1002,7 +1044,7 @@
   <section class="sh-section sh-about" id="sh-about">
     <div class="sh-about-grid">
       <div class="sh-about-photo">
-        <img src="SHPHOTO.JPG" alt="Mike - Licensed Massage Therapist" class="sh-therapist-img" />
+        <img src="SHPHOTO.JPG" loading="lazy" alt="Mike Butcher - Licensed Massage Therapist" class="sh-therapist-img" />
       </div>
       <div class="sh-about-text">
         <h2>About <span class="sh-gold-text">Mike</span></h2>
@@ -1082,7 +1124,7 @@
     </div>
   </section>
 
-  <a href="https://form.jotform.com/251873720824056" target="_blank" rel="noopener noreferrer" class="sh-floating-book" id="sh-floating-book">
+  <a href="https://form.jotform.com/251873720824056" target="_blank" rel="noopener noreferrer" class="sh-floating-book" id="sh-floating-book" aria-label="Book a massage session with Mike">
     📅 Book Now
   </a>
 
@@ -1204,6 +1246,22 @@
         alert('Something went wrong. Please try again.');
       }
     });
+  </script>
+  <script>
+    const shHamburger = document.getElementById('sh-hamburger');
+    const shNavLinks = document.querySelector('.sh-nav-links');
+    if (shHamburger && shNavLinks) {
+      shHamburger.addEventListener('click', () => {
+        shNavLinks.classList.toggle('open');
+        shHamburger.setAttribute('aria-expanded', shNavLinks.classList.contains('open') ? 'true' : 'false');
+      });
+      document.querySelectorAll('.sh-nav-links a').forEach(link => {
+        link.addEventListener('click', () => {
+          shNavLinks.classList.remove('open');
+          shHamburger.setAttribute('aria-expanded', 'false');
+        });
+      });
+    }
   </script>
 </body>
 </html>

@@ -17,10 +17,17 @@
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
   <nav class="sticky-nav" id="stickyNav">
     <div class="nav-brand">
-      <img src="STS.png" alt="StarkTech Studios" class="nav-logo-img" onerror="this.style.display='none'" />
-      <span class="nav-brand-name">StarkTech Studios</span>
+      <a href="index.html" class="nav-logo">
+        <img src="STS.png" alt="StarkTech Studios" class="nav-logo-img">
+        <span>StarkTech Studios</span>
+      </a>
+      <a href="massage.html" class="nav-sh-link" title="Sacred Hands Massage & Readings">
+        <img src="SHMT.png" alt="Sacred Hands" class="nav-sh-logo">
+        <span class="nav-sh-text">Sacred Hands</span>
+      </a>
     </div>
     <div class="nav-menu" id="navMenu">
       <a href="index.html" class="nav-link">Home</a>
@@ -33,7 +40,7 @@
       <a href="massage.html" class="nav-link">Sacred Hands</a>
       <a href="#contact" class="nav-link">Contact</a>
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Open menu">
+    <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
       <span></span>
       <span></span>
       <span></span>
@@ -52,7 +59,7 @@
     <a href="#contact" class="mobile-link">Contact</a>
   </div>
 
-  <main>
+  <main id="main-content" role="main">
     <section id="skills" class="section">
       <div class="section-header">
         <span class="section-tag">Skills & Certifications</span>
@@ -168,6 +175,6 @@
     <p>© 2025 Mike Butcher | StarkTech Studios. All rights reserved. | Built with ❤️ and clean code.</p>
   </footer>
 
-  <script src="Portfolio.js"></script>
+  <script src="Portfolio.js" defer></script>
 </body>
 </html>

@@ -3,15 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="StarkTech Studios builds clean, responsive websites and interactive widgets. Created by Mike Butcher, a developer passionate about modern web experiences." />
-  <meta name="author" content="Mike Butcher" />
-  <meta name="robots" content="index, follow" />
+  <meta name="description" content="Mike Butcher — Software Developer, AI Developer, IT Expert, and Content Creator based in Chillicothe, Ohio. Building websites, AI tools, and technology for real people.">
+  <meta name="keywords" content="Mike Butcher, Stark Tech Studios, web developer, AI developer, software engineer, Chillicothe Ohio">
+  <meta name="author" content="Mike Butcher">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Mike Butcher | Stark Tech Studios">
+  <meta property="og:description" content="Software Developer, AI Developer, IT Expert & Content Creator. Building worlds through code.">
+  <meta property="og:image" content="https://starktechstudios.com/Pic1.jpeg">
+  <meta property="og:url" content="https://starktechstudios.com">
+  <meta property="og:type" content="website">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Mike Butcher | Stark Tech Studios">
+  <meta name="twitter:description" content="Software Developer, AI Developer, IT Expert & Content Creator. Building worlds through code.">
+  <meta name="twitter:image" content="https://starktechstudios.com/Pic1.jpeg">
+  
+  <link rel="canonical" href="https://starktechstudios.com">
   <meta name="google-site-verification" content="YOUR_GOOGLE_VERIFICATION_CODE" />
-  <meta property="og:title" content="StarkTech Studios | Web Development & Massage Therapy" />
-  <meta property="og:description" content="Explore licensed massage therapy and modern web development services. Book a massage or view creative digital projects by Mike Butcher." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://starktechstudios.com" />
-  <meta property="og:image" content="https://knightofren2588.github.io/assets/massage-preview.jpg" />
   <title>StarkTech Studios | Web Design & Creative Code by Mike Butcher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,11 +32,19 @@
 </head>
 <body>
 
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- Sticky Logo Nav -->
   <nav class="sticky-nav" id="stickyNav">
     <div class="nav-brand">
-      <img src="STS.png" alt="StarkTech Studios" class="nav-logo-img" onerror="this.style.display='none'" />
-      <span class="nav-brand-name">StarkTech Studios</span>
+      <a href="index.html" class="nav-logo">
+        <img src="STS.png" alt="StarkTech Studios" class="nav-logo-img">
+        <span>StarkTech Studios</span>
+      </a>
+      <a href="massage.html" class="nav-sh-link" title="Sacred Hands Massage & Readings">
+        <img src="SHMT.png" alt="Sacred Hands" class="nav-sh-logo">
+        <span class="nav-sh-text">Sacred Hands</span>
+      </a>
     </div>
     <div class="nav-menu" id="navMenu">
       <a href="index.html" class="nav-link">Home</a>
@@ -38,7 +57,7 @@
       <a href="massage.html" class="nav-link">Sacred Hands</a>
       <a href="#contact" class="nav-link">Contact</a>
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Open menu">
+    <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
       <span></span>
       <span></span>
       <span></span>
@@ -58,7 +77,8 @@
   </div>
 
   <!-- Hero Section -->
-  <section class="hero" id="home">
+  <section class="hero" id="main-content" role="main">
+    <canvas id="hero-particles"></canvas>
     <div class="hero-bg-orbs">
       <div class="orb orb-1"></div>
       <div class="orb orb-2"></div>
@@ -69,38 +89,36 @@
         <h1 class="hero-title">
           Hi, I'm <span class="hero-name">Mike Butcher</span>
         </h1>
-        <p class="hero-subtitle">
-          I'm a <span id="typingText"></span><span class="cursor-blink">|</span>
-        </p>
+        <p class="hero-typing">I'm a <span id="typing-text" style="color: var(--accent);"></span><span class="typing-cursor">|</span></p>
         <p class="hero-desc">
           Self-taught web developer, AI enthusiast & licensed massage therapist 
           based in Chillicothe, Ohio. I build clean, fast, modern digital 
           experiences — and I do it with heart.
         </p>
         <div class="hero-cta">
-          <a href="https://form.jotform.com/251885114666060" target="_blank" rel="noopener" class="btn btn-primary">
+          <a href="https://form.jotform.com/251885114666060" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
             Work With Me <span class="btn-arrow">→</span>
           </a>
           <a href="projects.html" class="btn btn-outline">View Projects</a>
         </div>
         <div class="hero-stats">
           <div class="stat-item">
-            <span class="stat-num">10+</span>
+            <span class="stat-num" data-target="10">10+</span>
             <span class="stat-label">Projects Built</span>
           </div>
           <div class="stat-item">
-            <span class="stat-num">98</span>
+            <span class="stat-num" data-target="98">98</span>
             <span class="stat-label">Lighthouse Score</span>
           </div>
           <div class="stat-item">
-            <span class="stat-num">3</span>
+            <span class="stat-num" data-target="3">3</span>
             <span class="stat-label">Client Sites Live</span>
           </div>
         </div>
       </div>
       <div class="hero-visual">
         <div class="profile-glow-ring">
-          <img src="Pic1.jpeg" alt="Mike Butcher" class="profile-photo" />
+          <img src="Pic1.jpeg" alt="Mike Butcher - Software Developer and AI Developer" class="profile-photo" />
         </div>
         <div class="hero-glow-blob"></div>
       </div>
@@ -146,7 +164,7 @@
           <span class="skill-tag">Netlify</span>
         </div>
         <a href="https://showcasetransportllc.com" target="_blank" 
-           rel="noopener" class="btn btn-green btn-sm">
+           rel="noopener noreferrer" class="btn btn-green btn-sm">
           🌐 View Live Site
         </a>
       </div>
@@ -168,7 +186,7 @@
           <span class="skill-tag">JavaScript</span>
         </div>
         <a href="https://mycentsible.netlify.app/login" target="_blank" 
-           rel="noopener" class="btn btn-primary btn-sm">
+           rel="noopener noreferrer" class="btn btn-primary btn-sm">
           🚀 Launch App
         </a>
       </div>
@@ -190,7 +208,7 @@
           <span class="skill-tag">CSS3</span>
         </div>
         <a href="https://sunny-safety-duck.netlify.app" target="_blank" 
-           rel="noopener" class="btn btn-primary btn-sm">
+           rel="noopener noreferrer" class="btn btn-primary btn-sm">
           🤖 Launch Sunny AI
         </a>
       </div>
@@ -237,19 +255,11 @@
             </div>
           </a>
           <a href="https://www.linkedin.com/in/mikebutcher88/"
-             target="_blank" rel="noopener" class="contact-item">
+             target="_blank" rel="noopener noreferrer" class="contact-item">
             <div class="contact-item-icon">💼</div>
             <div class="contact-item-text">
               <span class="contact-item-label">LinkedIn</span>
               <span class="contact-item-value">mikebutcher88</span>
-            </div>
-          </a>
-          <a href="https://www.facebook.com/Iamironman3kk/"
-             target="_blank" rel="noopener" class="contact-item">
-            <div class="contact-item-icon">📘</div>
-            <div class="contact-item-text">
-              <span class="contact-item-label">Facebook</span>
-              <span class="contact-item-value">StarkTech Studios</span>
             </div>
           </a>
         </div>
@@ -266,7 +276,7 @@
           <li>✓ No commitment required</li>
         </ul>
         <a href="https://form.jotform.com/251885114666060"
-           target="_blank" rel="noopener" class="btn btn-primary btn-lg">
+           target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg">
           Start Your Project →
         </a>
       </div>
@@ -277,6 +287,7 @@
     <p>© 2025 Mike Butcher | StarkTech Studios. All rights reserved. | Built with ❤️ and clean code.</p>
   </footer>
 
-  <script src="Portfolio.js"></script>
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+  <script src="Portfolio.js" defer></script>
 </body>
 </html>

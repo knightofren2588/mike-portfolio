@@ -4,17 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Testimonials | Mike Butcher – Stark Tech Studios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- Sticky Logo Nav -->
   <nav class="sticky-nav" id="stickyNav">
     <div class="nav-brand">
-      <img src="STS.png" alt="StarkTech Studios" class="nav-logo-img" onerror="this.style.display='none'" />
-      <span class="nav-brand-name">StarkTech Studios</span>
+      <a href="index.html" class="nav-logo">
+        <img src="STS.png" alt="StarkTech Studios" class="nav-logo-img">
+        <span>StarkTech Studios</span>
+      </a>
+      <a href="massage.html" class="nav-sh-link" title="Sacred Hands Massage & Readings">
+        <img src="SHMT.png" alt="Sacred Hands" class="nav-sh-logo">
+        <span class="nav-sh-text">Sacred Hands</span>
+      </a>
     </div>
     <div class="nav-menu" id="navMenu">
       <a href="index.html" class="nav-link">Home</a>
@@ -27,7 +37,7 @@
       <a href="massage.html" class="nav-link">Sacred Hands</a>
       <a href="#contact" class="nav-link">Contact</a>
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Open menu">
+    <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
       <span></span>
       <span></span>
       <span></span>
@@ -47,7 +57,7 @@
   </div>
 
   <!-- PAGE HERO -->
-  <section class="page-hero">
+  <section class="page-hero" id="main-content" role="main">
     <div class="page-hero-content">
       <span class="page-hero-badge">⭐ Real Words from Real People</span>
       <h1 class="page-hero-title">Client <span class="accent-text">Testimonials</span></h1>
@@ -203,6 +213,6 @@
     });
   </script>
 
-  <script src="Portfolio.js"></script>
+  <script src="Portfolio.js" defer></script>
 </body>
 </html>

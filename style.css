@@ -61,6 +61,28 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  .skip-link {
+    position: absolute;
+    top: -100px;
+    left: 1rem;
+    background: var(--accent);
+    color: var(--bg-primary);
+    padding: 0.5rem 1rem;
+    border-radius: 0 0 8px 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none;
+    z-index: 99999;
+    transition: top 0.2s;
+  }
+  .skip-link:focus { top: 0; }
   
   /* ========================
      Tech Grid Overlay
@@ -114,14 +136,21 @@
   .nav-brand {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     text-decoration: none;
   }
   
   .nav-logo-img {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     object-fit: contain;
+    border-radius: 6px;
     filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
   }
 
@@ -132,6 +161,57 @@
     color: var(--accent);
     letter-spacing: 2px;
     white-space: nowrap;
+  }
+
+  .nav-logo span {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+
+  .nav-sh-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    opacity: 0.85;
+    transition: var(--transition);
+    border-left: 1px solid var(--border);
+    padding-left: 1rem;
+  }
+
+  .nav-sh-link:hover {
+    opacity: 1;
+  }
+
+  .nav-sh-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    border-radius: 50%;
+    border: 1px solid rgba(240, 180, 41, 0.3);
+    transition: var(--transition);
+  }
+
+  .nav-sh-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  .nav-sh-link:hover .nav-sh-logo {
+    border-color: var(--gold);
+    box-shadow: 0 0 12px rgba(240, 180, 41, 0.3);
+  }
+
+  @media (max-width: 900px) {
+    .nav-sh-text { display: none; }
   }
   
   .nav-menu {
@@ -266,6 +346,16 @@
     z-index: 0;
   }
 
+  #hero-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
   .orb {
     position: absolute;
     border-radius: 50%;
@@ -309,6 +399,13 @@
     text-align: center;
   }
 
+  .hero-content,
+  .hero-visual,
+  .hero-scroll-hint {
+    position: relative;
+    z-index: 1;
+  }
+
   .hero-badge {
     display: inline-block;
     padding: 0.4rem 1.1rem;
@@ -348,20 +445,47 @@
     font-weight: 400;
   }
 
-  #typingText {
+  .typing-cursor {
     color: var(--accent);
-    font-weight: 600;
-  }
-
-  .cursor-blink {
-    color: var(--accent);
-    animation: blink 1s step-end infinite;
+    animation: blink 0.8s infinite;
     font-weight: 300;
   }
 
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
+  }
+
+  .back-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    border: 1px solid var(--border-hover);
+    color: var(--accent);
+    font-size: 1.2rem;
+    cursor: pointer;
+    z-index: 9998;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .back-to-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .back-to-top:hover {
+    background: var(--accent);
+    color: var(--bg-primary);
+    box-shadow: var(--glow-cyan);
   }
 
   .hero-desc {
@@ -2263,11 +2387,113 @@
   background: linear-gradient(180deg, var(--bg-primary) 0%, #0a1628 100%);
 }
 
+/* =====================
+   MOBILE — max 768px
+   ===================== */
 @media (max-width: 768px) {
-  .about-story-grid { grid-template-columns: 1fr; }
-  .about-story-text { text-align: center; }
-  .about-story-text .about-section-title { text-align: center !important; }
-  .about-quick-facts { justify-content: center; }
+
+  /* Nav */
+  .nav-links { display: none; }
+  .hamburger { display: flex; }
+
+  /* Hero */
+  .hero-content { padding: 1.5rem; }
+  .hero h1 { font-size: clamp(2rem, 8vw, 3rem); }
+  .hero-subtitle { font-size: 1rem; }
+  .hero-buttons { flex-direction: column; align-items: center; gap: 0.75rem; }
+  .hero-buttons .btn { width: 100%; max-width: 280px; text-align: center; }
+  .hero-stats { gap: 1.5rem; flex-wrap: wrap; justify-content: center; }
+  .profile-ring { width: 160px; height: 160px; }
+
+  /* Page heroes */
+  .page-hero { padding: 6rem 1.5rem 3rem; }
+  .page-hero-title { font-size: clamp(1.8rem, 7vw, 2.5rem); }
+
+  /* Sections */
+  .section, .about-section, .testi-section, .videos-section { padding: 3rem 1.25rem; }
+
+  /* Grids → single column */
+  .services-grid,
+  .skills-grid,
+  .projects-grid,
+  .about-identity-grid,
+  .about-equitas-grid,
+  .about-values-grid,
+  .testi-grid,
+  .sh-services-grid,
+  .sh-readings-grid,
+  .sh-testimonial-grid,
+  .video-grid { grid-template-columns: 1fr; }
+
+  /* Two-column layouts → stack */
+  .about-story-grid,
+  .contact-grid,
+  .sh-contact-grid,
+  .sh-about-grid,
+  .video-featured-card { grid-template-columns: 1fr; }
+
+  /* About page */
+  .about-story-text { text-align: left; }
+  .about-quick-facts { justify-content: flex-start; }
+  .about-photo { max-height: 320px; object-fit: cover; }
+  .about-quote-block { padding: 2rem 1.5rem; }
+  .about-quote-text { font-size: 0.95rem; }
+  .about-quote-mark { font-size: 5rem; top: 1rem; left: 1rem; }
+
+  /* Contact */
+  .contact-grid { gap: 1.5rem; }
+  .contact-cta-card { padding: 1.75rem; }
+
+  /* Videos page */
+  .video-featured-player { border-radius: var(--radius) var(--radius) 0 0; }
+  .video-featured-info { padding: 1.5rem; }
+  .videos-container { gap: 3rem; }
+
+  /* Forms */
+  .testi-form-row,
+  .sh-form-row { grid-template-columns: 1fr; }
+
+  /* Sacred Hands */
+  .sh-hero { padding: 7rem 1.5rem 4rem; }
+  .sh-hero-title { font-size: clamp(2rem, 8vw, 3.5rem); }
+  .sh-hero-btns { flex-direction: column; align-items: center; }
+  .sh-hero-btns .sh-btn { width: 100%; max-width: 280px; text-align: center; }
+  .sh-flip-card { height: auto; min-height: 260px; }
+  .sh-flip-inner { transform: none !important; }
+  .sh-flip-front { position: relative; backface-visibility: visible; transform: none; }
+  .sh-flip-back { display: none; }
+  .sh-flip-card .sh-pricing-tag { display: block; margin-top: 1rem; }
+  .sh-nav { padding: 0 1.25rem; }
+  .sh-nav-links { display: none; }
+  .sh-readings-grid { grid-template-columns: 1fr; }
+  .sh-floating-book { bottom: 1.25rem; right: 1.25rem; font-size: 0.85rem; padding: 0.7rem 1.2rem; }
+
+  /* Flip cards — disable 3D on mobile, show content flat */
+  .sh-flip-card:hover .sh-flip-inner { transform: none; }
+
+  /* Footer */
+  .footer-content { flex-direction: column; gap: 1rem; text-align: center; }
+  .footer-links { justify-content: center; flex-wrap: wrap; }
+
+  /* Buttons */
+  .cta-buttons { flex-direction: column; align-items: center; }
+
+  /* Titles */
+  .section-title,
+  .about-section-title,
+  .testi-section-title { font-size: clamp(1.4rem, 6vw, 2rem); }
+}
+
+/* =====================
+   SMALL PHONES — max 480px
+   ===================== */
+@media (max-width: 480px) {
+  .hero h1 { font-size: 1.9rem; }
+  .page-hero-title { font-size: 1.7rem; }
+  .about-quote-block { padding: 1.5rem 1rem; }
+  .testi-card, .sh-testimonial-card, .sh-reading-card { padding: 1.5rem; }
+  .video-featured-info h3 { font-size: 1rem; }
+  .sh-floating-book { bottom: 1rem; right: 1rem; }
 }
 
 /* =====================
@@ -2439,10 +2665,6 @@
   line-height: 1;
 }
 .testi-star-btn.active { color: var(--gold); }
-
-@media (max-width: 768px) {
-  .testi-form-row { grid-template-columns: 1fr; }
-}
 
 /* =====================
    SACRED HANDS — Warm Earthy Spa Theme
