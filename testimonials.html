@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, follow">
   <title>Testimonials | Mike Butcher – Stark Tech Studios</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Pinned to an exact version (was @2). Same UMD file the CDN served for @2. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -65,8 +67,8 @@
     </div>
   </section>
 
-  <!-- SECTION 2 — Web & Tech placeholders -->
-  <section class="testi-section testi-section-alt">
+  <!-- Approved reviews. Hidden until at least one real, approved review exists. -->
+  <section class="testi-section testi-section-alt" id="starktech-reviews-section" hidden>
     <div class="testi-container">
 
       <div class="testi-category-header">
@@ -75,27 +77,7 @@
         <p class="testi-section-sub">From clients and colleagues on web projects, AI tools, and technical work.</p>
       </div>
 
-      <div class="testi-grid" id="starktech-reviews-grid">
-
-        <div class="testi-card testi-card-placeholder">
-          <div class="testi-placeholder-icon">💬</div>
-          <p class="testi-placeholder-text">A testimonial from a web development client will appear here soon.</p>
-          <div class="testi-placeholder-label">— Web Client</div>
-        </div>
-
-        <div class="testi-card testi-card-placeholder">
-          <div class="testi-placeholder-icon">💬</div>
-          <p class="testi-placeholder-text">A testimonial from an Equitas Health colleague will appear here soon.</p>
-          <div class="testi-placeholder-label">— Equitas Health</div>
-        </div>
-
-        <div class="testi-card testi-card-placeholder">
-          <div class="testi-placeholder-icon">💬</div>
-          <p class="testi-placeholder-text">More client feedback coming as projects are completed and reviewed.</p>
-          <div class="testi-placeholder-label">— Coming Soon</div>
-        </div>
-
-      </div>
+      <div class="testi-grid" id="starktech-reviews-grid"></div>
     </div>
   </section>
 
@@ -113,9 +95,13 @@
         </a>
       </div>
       <form class="testi-form" id="testi-form">
+        <!-- Honeypot: hidden from people, bots tend to fill it in. Leave empty. -->
+        <div class="hp-field" aria-hidden="true">
+          <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        </div>
         <div class="testi-form-row">
-          <input type="text" placeholder="Your Name" class="testi-input" required>
-          <input type="text" placeholder="Service or Project" class="testi-input">
+          <input type="text" name="reviewer_name" placeholder="Your Name" class="testi-input" maxlength="80" required>
+          <input type="text" name="service" placeholder="Service or Project" class="testi-input" maxlength="120">
         </div>
         <div class="testi-star-picker" id="testi-star-picker">
           <span style="color: var(--text-muted); font-size: 0.9rem;">Your Rating:</span>
@@ -125,7 +111,7 @@
           <span class="testi-star-btn" data-val="4">★</span>
           <span class="testi-star-btn" data-val="5">★</span>
         </div>
-        <textarea class="testi-input testi-textarea" placeholder="Share your experience..." required></textarea>
+        <textarea class="testi-input testi-textarea" name="review_body" placeholder="Share your experience..." maxlength="1500" required></textarea>
         <button type="submit" class="btn btn-primary" style="align-self: flex-start; padding: 0.85rem 2.5rem;">Submit Review</button>
       </form>
       <div id="testi-thanks" style="display:none; text-align:center; color: var(--accent); padding: 2rem; font-family: 'Orbitron', monospace;">
@@ -138,6 +124,7 @@
     <p>© 2025 Mike Butcher | StarkTech Studios. All rights reserved. | Built with ❤️ and clean code.</p>
   </footer>
 
+  <script src="reviews.js"></script>
   <script>
     const { createClient } = supabase;
     const sb = createClient(
@@ -160,61 +147,67 @@
     });
 
     // ── Load approved reviews ──
-    async function loadStackTechReviews() {
-      const { data, error } = await sb
-        .from('reviews')
-        .select('*')
-        .eq('page', 'starktech')
-        .eq('approved', true)
-        .order('created_at', { ascending: false });
+    // SECURITY: visitor-supplied text is added with textContent (via StarkReviews.el),
+    // never innerHTML, so HTML/JS typed into a review is shown as plain text.
+    function buildReviewCard(review) {
+      const R = window.StarkReviews;
+      const card = R.el('div', 'testi-card');
 
-      if (error || !data || data.length === 0) return;
+      const stars = R.starString(review.rating);
+      if (stars) card.appendChild(R.el('div', 'testi-stars', stars));
+
+      card.appendChild(R.el('p', 'testi-quote', '"' + R.cleanText(review.review_text, R.LIMITS.review_text) + '"'));
+
+      const name = R.cleanText(review.name, R.LIMITS.name) || 'Anonymous';
+      const row = R.el('div', 'testi-author-row');
+      row.appendChild(R.el('div', 'testi-avatar', R.initialOf(name)));
+      const meta = R.el('div');
+      meta.appendChild(R.el('div', 'testi-name', name));
+      meta.appendChild(R.el('div', 'testi-service', R.cleanText(review.service, R.LIMITS.service) || 'Web Development'));
+      row.appendChild(meta);
+      card.appendChild(row);
+      return card;
+    }
+
+    async function loadStarkTechReviews() {
+      const rows = await window.StarkReviews.fetchApproved(sb, 'starktech');
+      if (rows.length === 0) return; // nothing approved yet: section stays hidden
 
       const grid = document.getElementById('starktech-reviews-grid');
       if (!grid) return;
-      grid.innerHTML = '';
+      grid.textContent = '';
+      rows.forEach(review => grid.appendChild(buildReviewCard(review)));
 
-      data.forEach(review => {
-        const stars = '⭐'.repeat(review.rating);
-        const initial = review.name.charAt(0).toUpperCase();
-        grid.innerHTML += `
-          <div class="testi-card">
-            <div class="testi-stars">${stars}</div>
-            <p class="testi-quote">"${review.review_text}"</p>
-            <div class="testi-author-row">
-              <div class="testi-avatar">${initial}</div>
-              <div>
-                <div class="testi-name">${review.name}</div>
-                <div class="testi-service">${review.service || 'Web Development'}</div>
-              </div>
-            </div>
-          </div>`;
-      });
+      const section = document.getElementById('starktech-reviews-section');
+      if (section) section.hidden = false;
     }
-    loadStackTechReviews();
+    loadStarkTechReviews();
 
     // ── Submit review ──
+    // Browser checks (honeypot, time trap, length limits) are only a convenience.
+    // The database must enforce approved = false for anonymous inserts (see Phase 1 report).
+    const testiLoadedAt = Date.now();
     document.getElementById('testi-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
-      const name = form.querySelector('input[placeholder="Your Name"]').value;
-      const service = form.querySelector('input[placeholder="Service or Project"]').value;
-      const review_text = form.querySelector('textarea').value;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
 
-      const { error } = await sb.from('reviews').insert([{
-        name,
-        service,
-        rating: testiRating || 5,
-        review_text,
-        page: 'starktech',
-        approved: false
-      }]);
+      const result = await window.StarkReviews.submitReview(sb, 'starktech', {
+        name: form.elements['reviewer_name'].value,
+        service: form.elements['service'].value,
+        rating: testiRating,
+        review_text: form.elements['review_body'].value,
+        honeypot: form.elements['website'].value,
+        loadedAt: testiLoadedAt
+      });
 
-      if (!error) {
+      if (result.ok) {
         document.getElementById('testi-form').style.display = 'none';
         document.getElementById('testi-thanks').style.display = 'block';
       } else {
-        alert('Something went wrong. Please try again.');
+        alert(result.message);
+        if (submitBtn) submitBtn.disabled = false;
       }
     });
   </script>

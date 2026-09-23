@@ -350,8 +350,8 @@ class CloudStorage {
       user: {
         id: 'user-1',
         name: 'John Doe',
-        email: 'john@equitashealth.com',
-        company: 'Equitas Health',
+        email: 'demo@example.com',
+        company: 'Northstar Services LLC',
         createdAt: '2025-07-01',
         settings: {
           notifications: true,
@@ -379,8 +379,8 @@ class CloudStorage {
             { id: 11, name: 'Groceries', amount: 400.00, dueDate: 15, category: 'Food', assignedPaycheck: 1, isPaid: false, isSubscription: false }
           ],
           paychecks: [
-            { id: 1, date: '2025-07-11', amount: 1600.00, source: 'Equitas Health', label: 'First Paycheck' },
-            { id: 2, date: '2025-07-25', amount: 2100.00, source: 'Equitas Health', label: 'Second Paycheck' }
+            { id: 1, date: '2025-07-11', amount: 1600.00, source: 'Northstar Services LLC', label: 'First Paycheck' },
+            { id: 2, date: '2025-07-25', amount: 2100.00, source: 'Northstar Services LLC', label: 'Second Paycheck' }
           ]
         }
       },

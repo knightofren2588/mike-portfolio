@@ -13,7 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Pinned to an exact version (was @2). Same UMD file the CDN served for @2. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.js"></script>
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <style>
@@ -884,7 +885,7 @@
         <li><a href="#sh-services">Services</a></li>
         <li><a href="#sh-readings">Readings</a></li>
         <li><a href="#sh-about">About</a></li>
-        <li><a href="#sh-testimonials">Reviews</a></li>
+        <li><a href="#sh-review">Reviews</a></li>
         <li><a href="#sh-contact">Book</a></li>
         <li><a href="index.html" class="sh-nav-back">← Portfolio</a></li>
       </ul>
@@ -1095,28 +1096,13 @@
     </div>
   </section>
 
-  <section class="sh-section" id="sh-testimonials">
+  <!-- Approved reviews. Hidden until at least one real, approved review exists. -->
+  <section class="sh-section" id="sh-testimonials" hidden>
     <h2 class="sh-section-title">💬 <span class="sh-gold-text">What Clients Say</span></h2>
-    <div class="sh-testimonial-grid" id="sh-reviews-grid">
-      <div class="sh-testimonial-card">
-        <div class="sh-stars">⭐⭐⭐⭐⭐</div>
-        <p class="sh-testimonial-text">"Mike's deep tissue massage was exactly what I needed for my chronic back pain. He really knows how to target problem areas and I felt immediate relief!"</p>
-        <div class="sh-testimonial-author">— Sarah M.</div>
-      </div>
-      <div class="sh-testimonial-card">
-        <div class="sh-stars">⭐⭐⭐⭐⭐</div>
-        <p class="sh-testimonial-text">"The convenience of having a professional massage at home is incredible. Mike is punctual, professional, and his therapeutic touch is amazing."</p>
-        <div class="sh-testimonial-author">— John D.</div>
-      </div>
-      <div class="sh-testimonial-card">
-        <div class="sh-stars">⭐⭐⭐⭐⭐</div>
-        <p class="sh-testimonial-text">"I was skeptical about in-home massage, but Mike made me feel completely comfortable. The light body massage was perfect for my stress relief needs."</p>
-        <div class="sh-testimonial-author">— Lisa K.</div>
-      </div>
-    </div>
+    <div class="sh-testimonial-grid" id="sh-reviews-grid"></div>
   </section>
 
-  <section class="sh-section sh-review-section">
+  <section class="sh-section sh-review-section" id="sh-review">
     <h2 class="sh-section-title">✍️ <span class="sh-gold-text">Leave a Review</span></h2>
     <p class="sh-section-sub">Had a session with Mike? Share your experience below!</p>
     <div class="sh-google-review-prompt">
@@ -1126,9 +1112,13 @@
       </a>
     </div>
     <form class="sh-review-form" id="sh-review-form">
+      <!-- Honeypot: hidden from people, bots tend to fill it in. Leave empty. -->
+      <div class="hp-field" aria-hidden="true">
+        <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+      </div>
       <div class="sh-form-row">
-        <input type="text" name="reviewer_name" placeholder="Your Name" class="sh-input" required />
-        <input type="text" name="service" placeholder="Service Received" class="sh-input" />
+        <input type="text" name="reviewer_name" placeholder="Your Name" class="sh-input" maxlength="80" required />
+        <input type="text" name="service" placeholder="Service Received" class="sh-input" maxlength="120" />
       </div>
       <div class="sh-star-picker" id="sh-star-picker">
         <span>Your Rating:</span>
@@ -1138,7 +1128,7 @@
         <span class="sh-star-btn" data-val="4" role="button" tabindex="0">★</span>
         <span class="sh-star-btn" data-val="5" role="button" tabindex="0">★</span>
       </div>
-      <textarea class="sh-input sh-textarea" name="review_body" placeholder="Tell others about your experience..." required></textarea>
+      <textarea class="sh-input sh-textarea" name="review_body" placeholder="Tell others about your experience..." maxlength="1500" required></textarea>
       <button type="submit" class="sh-btn sh-btn-gold">Submit Review</button>
     </form>
     <div id="sh-review-thanks" style="display:none; text-align:center; color: var(--sh-gold-light); padding: 2rem;">
@@ -1177,6 +1167,7 @@
     <p style="margin-top:1rem;"><a href="index.html" style="color: var(--sh-text-muted); font-size:0.85rem;">← Back to Portfolio</a></p>
   </footer>
 
+  <script src="reviews.js"></script>
   <script>
     const shCanvas = document.getElementById('sh-particles');
     const shCtx = shCanvas.getContext('2d');
@@ -1237,56 +1228,70 @@
     });
 
     // ── Load approved reviews ──
-    async function loadSacredHandsReviews() {
-      const { data, error } = await sb
-        .from('reviews')
-        .select('*')
-        .eq('page', 'sacredhands')
-        .eq('approved', true)
-        .order('created_at', { ascending: false });
+    // SECURITY: visitor-supplied text is added with textContent (via StarkReviews.el),
+    // never innerHTML, so HTML/JS typed into a review is shown as plain text.
+    function buildShReviewCard(review) {
+      const R = window.StarkReviews;
+      const card = R.el('div', 'sh-testimonial-card');
 
-      if (error || !data || data.length === 0) return;
+      const stars = R.starString(review.rating);
+      if (stars) card.appendChild(R.el('div', 'sh-stars', stars));
+
+      card.appendChild(R.el('p', 'sh-testimonial-text', '"' + R.cleanText(review.review_text, R.LIMITS.review_text) + '"'));
+
+      const author = R.el('div', 'sh-testimonial-author', '— ' + (R.cleanText(review.name, R.LIMITS.name) || 'Anonymous'));
+      const service = R.cleanText(review.service, R.LIMITS.service);
+      if (service) {
+        const svc = R.el('span', null, service);
+        svc.style.fontSize = '0.8rem';
+        svc.style.color = 'var(--sh-text-muted)';
+        svc.style.fontWeight = '400';
+        svc.style.marginLeft = '0.5rem';
+        author.appendChild(svc);
+      }
+      card.appendChild(author);
+      return card;
+    }
+
+    async function loadSacredHandsReviews() {
+      const rows = await window.StarkReviews.fetchApproved(sb, 'sacredhands');
+      if (rows.length === 0) return; // nothing approved yet: section stays hidden
 
       const grid = document.getElementById('sh-reviews-grid');
       if (!grid) return;
-      grid.innerHTML = '';
+      grid.textContent = '';
+      rows.forEach(review => grid.appendChild(buildShReviewCard(review)));
 
-      data.forEach(review => {
-        const stars = '⭐'.repeat(review.rating);
-        grid.innerHTML += `
-          <div class="sh-testimonial-card">
-            <div class="sh-stars">${stars}</div>
-            <p class="sh-testimonial-text">"${review.review_text}"</p>
-            <div class="sh-testimonial-author">— ${review.name}
-              <span style="font-size:0.8rem; color: var(--sh-text-muted); font-weight:400; margin-left:0.5rem;">${review.service || ''}</span>
-            </div>
-          </div>`;
-      });
+      const section = document.getElementById('sh-testimonials');
+      if (section) section.hidden = false;
     }
     loadSacredHandsReviews();
 
     // ── Submit review ──
+    // Browser checks (honeypot, time trap, length limits) are only a convenience.
+    // The database must enforce approved = false for anonymous inserts (see Phase 1 report).
+    const shLoadedAt = Date.now();
     document.getElementById('sh-review-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
-      const name = form.querySelector('input[placeholder="Your Name"]').value;
-      const service = form.querySelector('input[placeholder="Service Received"]').value;
-      const review_text = form.querySelector('textarea').value;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
 
-      const { error } = await sb.from('reviews').insert([{
-        name,
-        service,
-        rating: selectedRating || 5,
-        review_text,
-        page: 'sacredhands',
-        approved: false
-      }]);
+      const result = await window.StarkReviews.submitReview(sb, 'sacredhands', {
+        name: form.elements['reviewer_name'].value,
+        service: form.elements['service'].value,
+        rating: selectedRating,
+        review_text: form.elements['review_body'].value,
+        honeypot: form.elements['website'].value,
+        loadedAt: shLoadedAt
+      });
 
-      if (!error) {
+      if (result.ok) {
         document.getElementById('sh-review-form').style.display = 'none';
         document.getElementById('sh-review-thanks').style.display = 'block';
       } else {
-        alert('Something went wrong. Please try again.');
+        alert(result.message);
+        if (submitBtn) submitBtn.disabled = false;
       }
     });
   </script>

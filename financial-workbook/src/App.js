@@ -54,7 +54,7 @@ const FinanceHubPro = () => {
   const [newUser, setNewUser] = useState({ name: '', email: '', company: '' });
   const [newMonth, setNewMonth] = useState({ name: '', year: new Date().getFullYear() });
   const [newBill, setNewBill] = useState({ name: '', amount: '', dueDate: '', category: 'Other', isSubscription: false });
-  const [newPaycheck, setNewPaycheck] = useState({ date: '', amount: '', source: 'Equitas Health', label: '' });
+  const [newPaycheck, setNewPaycheck] = useState({ date: '', amount: '', source: 'Northstar Services LLC', label: '' });
 
   const currentMonth = data?.months?.[data?.currentMonthId];
 
@@ -194,7 +194,7 @@ const FinanceHubPro = () => {
       }
     }));
     
-    setNewPaycheck({ date: '', amount: '', source: 'Equitas Health', label: '' });
+    setNewPaycheck({ date: '', amount: '', source: 'Northstar Services LLC', label: '' });
   };
 
   // Update bill
@@ -1600,7 +1600,7 @@ const FinanceHubPro = () => {
             <input
               style={styles.input}
               type="text"
-              placeholder="Source (e.g., Equitas Health)"
+              placeholder="Source (e.g., Northstar Services LLC)"
               value={newPaycheck.source}
               onChange={(e) => setNewPaycheck({...newPaycheck, source: e.target.value})}
             />

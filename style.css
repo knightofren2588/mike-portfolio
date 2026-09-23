@@ -2791,3 +2791,17 @@ body.sacred-hands-page p,
 body.sacred-hands-page li {
   color: var(--sh-text);
 }
+
+/* =====================
+   FORM HONEYPOT (anti-spam)
+   Hidden from people and screen readers; bots tend to fill it in.
+   Positioned off-screen instead of display:none so simple bots still see it.
+   ===================== */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
