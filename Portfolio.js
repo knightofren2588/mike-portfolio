@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Existing scroll logic is already handled above
     }, 16)); // ~60fps
   
-    console.log('StarkTech Studios - Website loaded successfully! 🚀');
+    console.log('Stark Tech Studios - Website loaded successfully! 🚀');
 
     // ── Typing Animation ──
     const typingEl = document.getElementById('typing-text');
@@ -116,8 +116,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const roles = [
         'Software Developer',
         'AI Developer',
-        'IT Expert',
-        'Content Creator',
         'World Builder'
       ];
       let roleIndex = 0;

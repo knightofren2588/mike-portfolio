@@ -2241,7 +2241,7 @@
 /* Shared section styles */
 .about-section { padding: 5rem 2rem; }
 .about-section.about-story-section { background: var(--bg-secondary); }
-.about-section.about-equitas { background: var(--bg-primary); }
+.about-section.about-professional { background: var(--bg-primary); }
 .about-section.about-values { background: var(--bg-secondary); }
 .about-container { max-width: 1200px; margin: 0 auto; }
 .about-section-title {
@@ -2347,15 +2347,15 @@
   border-radius: 50px;
 }
 
-/* Equitas grid */
-.about-equitas-grid {
+/* Professional / internal tools grid */
+.about-professional-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.25rem;
   margin-top: 3rem;
 }
 
-.about-equitas-card {
+.about-professional-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -2363,25 +2363,25 @@
   transition: var(--transition);
 }
 
-.about-equitas-card:hover {
+.about-professional-card:hover {
   border-color: var(--border-hover);
   box-shadow: var(--glow-cyan);
 }
 
-.about-equitas-icon {
+.about-professional-icon {
   font-size: 2rem;
   display: block;
   margin-bottom: 0.75rem;
 }
 
-.about-equitas-card h4 {
+.about-professional-card h4 {
   font-family: 'Orbitron', monospace;
   font-size: 0.9rem;
   color: var(--text-primary);
   margin: 0 0 0.6rem 0;
 }
 
-.about-equitas-card p {
+.about-professional-card p {
   color: var(--text-secondary);
   font-size: 0.85rem;
   line-height: 1.65;
@@ -2457,7 +2457,7 @@
   .skills-grid,
   .projects-grid,
   .about-identity-grid,
-  .about-equitas-grid,
+  .about-professional-grid,
   .about-values-grid,
   .testi-grid,
   .sh-services-grid,
@@ -2804,4 +2804,119 @@ body.sacred-hands-page li {
   width: 1px;
   height: 1px;
   overflow: hidden;
+}
+
+/* =====================
+   PRIMARY NAV CALL-TO-ACTION ("Start a Project")
+   Uses the same colors as .btn-primary.
+   ===================== */
+.nav-link.nav-cta {
+  background: var(--accent);
+  color: var(--bg-primary);
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border-radius: 50px;
+  transition: var(--transition);
+}
+
+.nav-link.nav-cta::after {
+  display: none;
+}
+
+.nav-link.nav-cta:hover {
+  background: var(--accent-hover);
+  color: var(--bg-primary);
+  box-shadow: var(--glow-cyan);
+}
+
+.mobile-link.mobile-cta {
+  background: var(--accent);
+  color: var(--bg-primary);
+  font-weight: 600;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.mobile-link.mobile-cta:hover {
+  background: var(--accent-hover);
+  color: var(--bg-primary);
+  border-color: transparent;
+}
+
+/* =====================
+   SITE FOOTER (multi-column)
+   ===================== */
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 2rem;
+  max-width: 1100px;
+  margin: 0 auto 1.5rem;
+  text-align: left;
+}
+
+.site-footer-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin: 0 0 0.6rem;
+}
+
+.site-footer-brand p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.site-footer-col .site-footer-heading {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+}
+
+.site-footer-col a {
+  display: block;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 0.2rem 0;
+  transition: var(--transition);
+}
+
+.site-footer-col a:hover {
+  color: var(--accent);
+}
+
+/* Deliberately quiet: smaller than the other footer links. */
+.site-footer-col a.site-footer-quiet {
+  font-size: 0.8rem;
+}
+
+.site-footer-copy {
+  margin: 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .site-footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .site-footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer-grid {
+    grid-template-columns: 1fr;
+  }
 }
