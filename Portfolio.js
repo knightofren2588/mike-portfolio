@@ -110,43 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
     console.log('Stark Tech Studios - Website loaded successfully! 🚀');
 
-    // ── Typing Animation ──
-    const typingEl = document.getElementById('typing-text');
-    if (typingEl) {
-      const roles = [
-        'Software Developer',
-        'AI Developer',
-        'World Builder'
-      ];
-      let roleIndex = 0;
-      let charIndex = 0;
-      let isDeleting = false;
-    
-      function typeLoop() {
-        const current = roles[roleIndex];
-        if (isDeleting) {
-          typingEl.textContent = current.substring(0, charIndex - 1);
-          charIndex--;
-        } else {
-          typingEl.textContent = current.substring(0, charIndex + 1);
-          charIndex++;
-        }
-    
-        let speed = isDeleting ? 60 : 110;
-    
-        if (!isDeleting && charIndex === current.length) {
-          speed = 1800;
-          isDeleting = true;
-        } else if (isDeleting && charIndex === 0) {
-          isDeleting = false;
-          roleIndex = (roleIndex + 1) % roles.length;
-          speed = 400;
-        }
-        setTimeout(typeLoop, speed);
-      }
-      typeLoop();
-    }
-    
     // ── Animated Stat Counters ──
     function animateCounters() {
       document.querySelectorAll('.stat-num').forEach(el => {
