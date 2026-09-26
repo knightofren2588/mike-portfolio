@@ -772,7 +772,7 @@
      Section Layouts
   ======================== */
   .section {
-    padding: 5rem 2rem;
+    padding: 3.5rem 2rem;
     max-width: 1100px;
     margin: 0 auto;
     opacity: 0;
@@ -956,7 +956,7 @@
   
   .section-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2.25rem;
   }
   
   .section-tag {
@@ -1322,7 +1322,7 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    margin-top: 2.5rem;
+    margin-top: 2rem;
   }
 
   .service-card .cat-title { margin-bottom: 1.25rem; }
@@ -1931,7 +1931,7 @@
     }
   
     .section {
-      padding: 5rem 2rem;
+      padding: 3.5rem 2rem;
     }
   
     .card-grid {
@@ -2258,7 +2258,7 @@
 }
 
 /* Shared section styles */
-.about-section { padding: 5rem 2rem; }
+.about-section { padding: 3.5rem 2rem; }
 .about-section.about-story-section { background: var(--bg-secondary); }
 .about-section.about-professional { background: var(--bg-primary); }
 .about-section.about-values { background: var(--bg-secondary); }
@@ -2274,7 +2274,7 @@
   text-align: center;
   color: var(--text-muted);
   font-size: 1rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2.25rem;
 }
 
 /* Identity grid */
@@ -2282,7 +2282,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1.5rem;
-  margin-top: 3rem;
+  margin-top: 2.25rem;
 }
 
 .about-identity-card {
@@ -2371,7 +2371,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.25rem;
-  margin-top: 3rem;
+  margin-top: 2.25rem;
 }
 
 .about-professional-card {
@@ -2412,7 +2412,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
-  margin-top: 3rem;
+  margin-top: 2.25rem;
 }
 
 .about-value-item {
@@ -2442,7 +2442,7 @@
 
 /* CTA strip */
 .about-cta {
-  padding: 5rem 2rem;
+  padding: 3.5rem 2rem;
   background: linear-gradient(180deg, var(--bg-primary) 0%, #0a1628 100%);
 }
 
