@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!--
+    SECURITY NOTES (GitHub Pages cannot send security headers, so these <meta> tags are the best available):
+    - CSP: only scripts/styles from this folder; the ONLY network destination is the Stark Tech Sales
+      Supabase project. No inline scripts, no inline styles, no CDNs, no external fonts or images.
+    - frame-ancestors cannot be set from a <meta> tag; js/router.js has a frame guard instead.
+    - This page contains NO secrets and NO data. The real lock is Supabase Auth + Row Level Security + the admin allowlist.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://nunrppmwdhlcopcugfnj.supabase.co; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="color-scheme" content="dark">
+
+  <title>Command Center</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/cc.css">
+</head>
+<body>
+  <noscript>
+    <p class="cc-noscript">JavaScript is required to use this page.</p>
+  </noscript>
+
+  <!-- Hidden until js/router.js confirms this page is not inside someone else's frame. -->
+  <div id="app" class="cc-app"></div>
+
+  <!-- Classic script: defines window.supabase (pinned supabase-js UMD build, served from this folder). -->
+  <script src="vendor/supabase.js"></script>
+  <!-- Entry point (ES modules). -->
+  <script type="module" src="js/router.js"></script>
+</body>
+</html>
