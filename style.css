@@ -2944,8 +2944,9 @@ body.sacred-hands-page li {
 }
 
 .site-footer-owner {
-  grid-column: 3;
-  justify-self: end;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
   padding: 0.3rem 0;   /* comfortable tap target ... */
   margin: -0.3rem 0;   /* ... without making the footer row any taller */
   font-size: 0.75rem;
@@ -2960,7 +2961,7 @@ body.sacred-hands-page li {
   color: var(--accent);
 }
 
-/* Narrow screens: copyright keeps its full-width line; the link sits right-aligned beneath it. */
+/* Narrow screens: copyright keeps its full-width line; the link sits left-aligned beneath it. */
 @media (max-width: 960px) {
   .site-footer-bottom {
     grid-template-columns: 1fr;
@@ -2970,6 +2971,7 @@ body.sacred-hands-page li {
   .site-footer-bottom .site-footer-copy,
   .site-footer-owner {
     grid-column: 1;
+    grid-row: auto;
   }
 }
 
