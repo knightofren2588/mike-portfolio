@@ -2925,6 +2925,54 @@ body.sacred-hands-page li {
   color: var(--text-secondary);
 }
 
+/* Owner access link: tucked into the bottom-right of the footer, deliberately understated.
+   The wrapper takes over the divider + spacing that the copyright line carries on its own,
+   so the copyright looks exactly as before; the link sits at the far right of the same row. */
+.site-footer-bottom {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: baseline;
+  column-gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.site-footer-bottom .site-footer-copy {
+  grid-column: 2;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.site-footer-owner {
+  grid-column: 3;
+  justify-self: end;
+  padding: 0.3rem 0;   /* comfortable tap target ... */
+  margin: -0.3rem 0;   /* ... without making the footer row any taller */
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  color: rgba(143, 163, 190, 0.8);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.site-footer-owner:hover,
+.site-footer-owner:focus-visible {
+  color: var(--accent);
+}
+
+/* Narrow screens: copyright keeps its full-width line; the link sits right-aligned beneath it. */
+@media (max-width: 960px) {
+  .site-footer-bottom {
+    grid-template-columns: 1fr;
+    row-gap: 0.4rem;
+  }
+
+  .site-footer-bottom .site-footer-copy,
+  .site-footer-owner {
+    grid-column: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .site-footer-grid {
     grid-template-columns: 1fr 1fr;
