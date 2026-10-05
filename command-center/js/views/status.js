@@ -1,17 +1,25 @@
 // System Status: INFERRED from database timestamps. It does not talk to n8n.
 // "Quiet" does not mean "broken" (nothing may have been due), so there are no pass/fail lights here.
+//
+// Desktop: a table. Phone / tablet (<= 960px): each automation becomes a card (system, evidence used, last seen,
+// age, backlog) restyled by cc.css, not a squeezed table.
 
 import {
   h, notice, section, fmtDateTime, fmtRelative, humanize, emptyState
 } from '../dom.js';
 import { isApprovedWaiting, isFollowupDue, latestTimestamp } from '../api.js';
 
-function statusRow(system, evidence, when, now) {
-  return h('tr', {},
-    h('td', { text: system }),
-    h('td', { class: 'cc-muted', text: evidence }),
-    h('td', { text: when ? fmtDateTime(when) : 'No data yet' }),
-    h('td', { text: when ? fmtRelative(when, now) : '—' })
+function plural(n, one, many) {
+  return n + ' ' + (n === 1 ? one : many);
+}
+
+function statusRow(system, evidence, when, now, backlog) {
+  return h('tr', { class: 'cc-srow' },
+    h('td', { class: 'cc-scell-system', 'data-label': 'System', text: system }),
+    h('td', { class: 'cc-muted', 'data-label': 'Evidence used', text: evidence }),
+    h('td', { 'data-label': 'Last seen', text: when ? fmtDateTime(when) : 'No data yet' }),
+    h('td', { 'data-label': 'Age', text: when ? fmtRelative(when, now) : '—' }),
+    h('td', { 'data-label': 'Backlog', text: backlog })
   );
 }
 
@@ -33,31 +41,32 @@ export function render(container, ctx) {
   const lastSentMessage = latestTimestamp(snap.messages.map((m) => m.sent_at));
   const lastProspectCreated = latestTimestamp(snap.prospects.map((p) => p.created_at));
 
-  container.appendChild(section('Automations (by last evidence)',
-    h('div', { class: 'cc-table-wrap' },
-      h('table', { class: 'cc-table' },
-        h('thead', {}, h('tr', {},
-          h('th', { scope: 'col', text: 'System' }),
-          h('th', { scope: 'col', text: 'Evidence used' }),
-          h('th', { scope: 'col', text: 'Last seen' }),
-          h('th', { scope: 'col', text: 'Age' })
-        )),
-        h('tbody', {},
-          statusRow('Reply detection', 'newest reply_received activity', lastReplyActivity || lastRepliedAt, now),
-          statusRow('Follow-up engine', 'newest followup_1_sent activity', lastFollowupSent, now),
-          statusRow('Approved sender', 'newest message sent_at', lastSentMessage, now),
-          statusRow('Prospecting system', 'newest prospect created_at', lastProspectCreated, now)
-        )
-      )
-    )
-  ));
-
-  // Backlog indicators.
   const waiting = snap.messages.filter(isApprovedWaiting);
   const oldestWaiting = waiting.length
     ? waiting.map((m) => new Date(m.created_at).getTime()).reduce((a, b) => Math.min(a, b))
     : null;
   const due = snap.prospects.filter((p) => isFollowupDue(p, now));
+
+  container.appendChild(section('Automations (by last evidence)',
+    h('div', { class: 'cc-table-wrap' },
+      h('table', { class: 'cc-table cc-stable' },
+        h('caption', { class: 'cc-sr-only', text: 'Automations, inferred from database evidence' }),
+        h('thead', {}, h('tr', {},
+          h('th', { scope: 'col', text: 'System' }),
+          h('th', { scope: 'col', text: 'Evidence used' }),
+          h('th', { scope: 'col', text: 'Last seen' }),
+          h('th', { scope: 'col', text: 'Age' }),
+          h('th', { scope: 'col', text: 'Backlog' })
+        )),
+        h('tbody', {},
+          statusRow('Reply detection', 'newest reply_received activity', lastReplyActivity || lastRepliedAt, now, 'None tracked'),
+          statusRow('Follow-up engine', 'newest followup_1_sent activity', lastFollowupSent, now, plural(due.length, 'follow-up due', 'follow-ups due') + ' (approx.)'),
+          statusRow('Approved sender', 'newest message sent_at', lastSentMessage, now, plural(waiting.length, 'approved message', 'approved messages') + ' waiting to send'),
+          statusRow('Prospecting system', 'newest prospect created_at', lastProspectCreated, now, 'None tracked')
+        )
+      )
+    )
+  ));
 
   container.appendChild(section('Backlog',
     h('ul', { class: 'cc-list' },
@@ -82,6 +91,6 @@ export function render(container, ctx) {
   ));
 
   container.appendChild(section('Data freshness',
-    h('p', { class: 'cc-muted', text: 'This page last loaded ' + fmtDateTime(snap.loadedAt) + '. Use “Refresh data” in the header to re-read the database.' })
+    h('p', { class: 'cc-muted', text: 'This page last loaded ' + fmtDateTime(snap.loadedAt) + '. Use Refresh in the top bar to re-read the database.' })
   ));
 }

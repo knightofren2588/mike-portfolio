@@ -5,8 +5,8 @@
 import { h, notice, factList, humanize } from '../dom.js';
 import { openModal } from '../modal.js';
 import { approveMessage, rejectMessage, editDraft } from '../actions.js';
-import { isHandledBySender } from '../api.js';
-import { LIMITS, N8N_SENDER_MESSAGE_TYPES } from '../config.js';
+import { senderWarning } from '../api.js';
+import { LIMITS } from '../config.js';
 
 function companyOf(prospect) {
   return prospect ? (prospect.company_name || '(unnamed company)') : 'Unknown prospect';
@@ -38,6 +38,12 @@ async function runAction(modal, ctx, state, work, successText) {
   try {
     await work();
   } catch (err) {
+    if (err && err.authExpired) {
+      // The session is gone. Close this dialog and go to the sign-in screen; never leave a write dialog on screen.
+      modal.close();
+      ctx.sessionExpired();
+      return;
+    }
     modal.setBusy(false);
     modal.setError(err && err.message ? err.message : 'Something went wrong. Nothing was changed.');
     if (err && (err.stale || err.authExpired)) state.reloadOnClose = true;
@@ -55,11 +61,7 @@ export function openApproveDialog(message, prospect, ctx) {
   const content = h('div', {},
     h('p', { class: 'cc-muted', text: 'This marks the draft as approved so n8n can pick it up and send it. Nothing is sent from this page.' }),
     summary(message, prospect),
-    isHandledBySender(message.message_type)
-      ? null
-      : notice('warn',
-          'n8n\'s sender currently only picks up: ' + N8N_SENDER_MESSAGE_TYPES.join(', ') +
-          '. A "' + (message.message_type || 'unknown') + '" message will stay queued until the sender is extended.')
+    senderWarning(message.message_type) ? notice('warn', senderWarning(message.message_type)) : null
   );
 
   openModal({

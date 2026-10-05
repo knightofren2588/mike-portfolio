@@ -8,7 +8,8 @@
 // Columns are listed explicitly (never "*") and match the verified Stark Tech Sales schema.
 
 import { sb } from './supabaseClient.js';
-import { PAGE_SIZE, MAX_ROWS_PER_TABLE, N8N_SENDER_MESSAGE_TYPES } from './config.js';
+import { PAGE_SIZE, MAX_ROWS_PER_TABLE, SENDER_WORKFLOWS } from './config.js';
+import { PROSPECT_STATUSES } from './utilities/labels.js';
 
 const PROSPECT_COLUMNS = [
   'id', 'company_name', 'website', 'industry', 'city', 'state', 'contact_name',
@@ -40,12 +41,9 @@ const SUPPRESSION_COLUMNS = ['id', 'email'].join(',');
 export const MESSAGE_STATUS_DRAFT = 'draft';
 export const MESSAGE_STATUS_APPROVED = 'approved';
 
-// Display order for pipeline columns. Used only for SORTING statuses that actually exist
-// in the data; a status that is not in the database never appears.
-export const STAGE_ORDER = [
-  'researched', 'approved', 'sent', 'followup_1', 'followup_2', 'replied',
-  'qualified', 'proposal', 'won', 'lost', 'closed'
-];
+// Display order for pipeline columns and status filters: the real prospect statuses your database allows
+// (utilities/labels.js is the single source). A status that is not in the data simply has no rows.
+export const STAGE_ORDER = PROSPECT_STATUSES;
 
 function isAuthProblem(error) {
   if (!error) return false;
@@ -102,9 +100,12 @@ async function selectMessages() {
 
 let cache = null;
 let inflight = null;
+let generation = 0; // bumped by clearCache(): a load that was in flight when you signed out must not refill the cache
 
 export function clearCache() {
   cache = null;
+  inflight = null;
+  generation++;
 }
 
 /** Load (or reuse) one read-only snapshot of the CRM. */
@@ -113,7 +114,8 @@ export function getSnapshot(options) {
   if (cache && !force) return Promise.resolve(cache);
   if (inflight) return inflight;
 
-  inflight = (async () => {
+  const run = (async () => {
+    const startedInGeneration = generation;
     const [p, m, a, s] = await Promise.all([
       selectAll('prospects', PROSPECT_COLUMNS),
       selectMessages(),
@@ -144,7 +146,7 @@ export function getSnapshot(options) {
       if (value) suppressed.add(value);
     }
 
-    cache = {
+    const snapshot = {
       loadedAt: new Date(),
       prospects: p.rows,
       messages: m.rows,
@@ -162,13 +164,16 @@ export function getSnapshot(options) {
       messagesByProspect: messagesByProspect,
       activitiesByProspect: activitiesByProspect
     };
-    return cache;
+    // If you signed out while this was loading, hand the result to the caller but do NOT keep it.
+    if (startedInGeneration === generation) cache = snapshot;
+    return snapshot;
   })();
 
-  inflight = inflight.finally(() => {
-    inflight = null;
+  const tracked = run.finally(() => {
+    if (inflight === tracked) inflight = null;
   });
-  return inflight;
+  inflight = tracked;
+  return tracked;
 }
 
 // ---------- derived, read-only helpers (no database calls) ----------
@@ -186,9 +191,29 @@ export function isSent(message) {
   return !!message.sent_at || message.status === 'sent';
 }
 
-/** True when the n8n approved-sender is known to pick up this message_type. */
-export function isHandledBySender(messageType) {
-  return N8N_SENDER_MESSAGE_TYPES.indexOf(messageType) !== -1;
+/**
+ * What config.js says about a sender workflow for this message type. Command Center cannot see n8n, so this
+ * only reflects what YOU set in config.js (SENDER_WORKFLOWS); it never claims a workflow is live.
+ *   'ready'    marked published in config.js
+ *   'unready'  a workflow is listed but NOT marked published
+ *   'none'     no sender workflow listed for this type
+ */
+export function senderCapability(messageType) {
+  const entry = SENDER_WORKFLOWS[messageType];
+  if (!entry) return { state: 'none', workflow: null, note: null };
+  return { state: entry.published ? 'ready' : 'unready', workflow: entry.workflow || 'sender workflow', note: entry.note || null };
+}
+
+/** Warning for approving / queueing a message of this type, or null when config.js marks its sender as published. */
+export function senderWarning(messageType) {
+  const cap = senderCapability(messageType);
+  const type = messageType || 'unknown';
+  if (cap.state === 'ready') return null;
+  if (cap.state === 'unready') {
+    return 'According to config.js, the ' + cap.workflow + ' is not marked as published, so an approved "' + type +
+      '" message will wait until it is.' + (cap.note ? ' ' + cap.note : '');
+  }
+  return 'According to config.js, no sender workflow is set up for "' + type + '" messages, so an approved one will wait.';
 }
 
 export function normalizeEmail(value) {
@@ -253,6 +278,19 @@ export function approvalBlocker(snap, message, prospect) {
   return null;
 }
 
+// Prospects that are no longer in play. "Active" means NOT one of these statuses and NOT flagged do-not-contact.
+export const INACTIVE_PROSPECT_STATUSES = ['closed', 'won', 'lost', 'do_not_contact'];
+
+/** True when the prospect is flagged do-not-contact, by the flag or by the status. */
+export function isDoNotContact(prospect) {
+  return !!prospect.do_not_contact || prospect.status === 'do_not_contact';
+}
+
+/** Active prospect: not closed / won / lost / do_not_contact, and not flagged do-not-contact. */
+export function isActiveProspect(prospect) {
+  return INACTIVE_PROSPECT_STATUSES.indexOf(prospect.status) === -1 && !prospect.do_not_contact;
+}
+
 /**
  * APPROXIMATE follow-up-due check, computed in the browser from timestamps.
  * n8n's own "Get Follow-Up Candidates" query is the authority; this is only a dashboard hint.
@@ -260,9 +298,8 @@ export function approvalBlocker(snap, message, prospect) {
 export function isFollowupDue(prospect, now) {
   const ref = now instanceof Date ? now : new Date();
   if (!prospect.next_followup_at) return false;
-  if (prospect.do_not_contact) return false;
+  if (!isActiveProspect(prospect)) return false;
   if (prospect.replied_at) return false;
-  if (prospect.status === 'closed') return false;
   return new Date(prospect.next_followup_at).getTime() <= ref.getTime();
 }
 

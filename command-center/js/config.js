@@ -23,8 +23,32 @@ export const MAX_ROWS_PER_TABLE = 5000;
 // Mirrors the limits enforced inside the database functions (the database is the real check).
 export const LIMITS = { subject: 300, body: 20000, reason: 1000 };
 
-// message_type values the n8n approved-sender currently picks up. From the verified n8n setup:
-// approved = true AND status = 'approved' AND message_type = 'followup_1'.
-// The UI uses this ONLY to warn that an approved message of another type will wait.
-// Update this list if the n8n sender is extended.
-export const N8N_SENDER_MESSAGE_TYPES = ['followup_1'];
+// Which message types have an n8n SENDER workflow, and whether YOU have marked it as published.
+//
+// Command Center cannot see n8n. It does not detect whether any workflow is built, published or running.
+// This table is manual information that you maintain, and the screens word it that way ("according to
+// config.js"). It is used ONLY to warn that an approved message may wait because nothing is set up to send it.
+//
+//   workflow   the name shown in warnings
+//   published  true once you have published that workflow in n8n (set it yourself)
+//   note       optional extra sentence shown in the warning
+//
+// A message type with no entry (or null) means "no sender workflow configured for this type".
+export const SENDER_WORKFLOWS = {
+  initial: {
+    workflow: 'Initial Approved Sender',
+    published: false,
+    note: 'It passed QA but is not published yet (the production opt-out footer is still to be added).'
+  },
+  followup_1: {
+    workflow: 'Follow-Up Sender',
+    published: false
+  }
+  // followup_2: no sender workflow configured yet
+};
+
+// Lead score colour bands for the score badge (0-100). Display only.
+export const LEAD_SCORE_BANDS = { high: 70, medium: 40 };
+
+// Prospects page: rows rendered at a time before "Show more".
+export const PROSPECT_PAGE_SIZE = 50;

@@ -1,30 +1,60 @@
 // Entry point: frame guard -> authentication gate -> app shell with hash routing.
+//
+// SESSION END: every path that leads to the sign-in screen goes through endSession() FIRST:
+//   idle logout, manual sign-out, expired session (load or action), auth failure, and a SIGNED_OUT event.
+// endSession() closes any open write dialog, the mobile drawer and (later) the command palette, clears cached CRM
+// data and search/index state, stops the idle timer and scrubs search text from the address bar, all before the
+// sign-in screen is drawn.
 
 import { sb, startupError } from './supabaseClient.js';
 import * as auth from './auth.js';
-import { getSnapshot, clearCache } from './api.js';
-import { h, clear, notice, fmtDateTime } from './dom.js';
+import { getSnapshot, clearCache, isAwaitingApproval } from './api.js';
+import { h, clear, notice } from './dom.js';
+import { closeActiveModal } from './modal.js';
+import { endSession, onSessionEnd } from './utilities/session.js';
+import { parseHash, buildHash } from './utilities/query.js';
+import { createShell, navEntry } from './components/shell.js';
+import { errorState, loadingState } from './components/ui.js';
 import * as overview from './views/overview.js';
 import * as queue from './views/queue.js';
 import * as pipeline from './views/pipeline.js';
+import * as prospects from './views/prospects.js';
+import * as prospectDetail from './views/prospectDetail.js';
 import * as activity from './views/activity.js';
 import * as status from './views/status.js';
 
 const ROUTES = {
-  overview: { label: 'Overview', view: overview },
-  queue: { label: 'Approval Queue', view: queue },
-  pipeline: { label: 'Pipeline', view: pipeline },
-  activity: { label: 'Activity Feed', view: activity },
-  status: { label: 'System Status', view: status }
+  overview: { view: overview },
+  queue: { view: queue },
+  pipeline: { view: pipeline },
+  prospects: { view: prospects, detail: prospectDetail },
+  activity: { view: activity },
+  status: { view: status }
 };
 const DEFAULT_ROUTE = 'overview';
 
 const root = document.getElementById('app');
+let shell = null;
 let main = null;
-let navLinks = [];
 let renderToken = 0;
 let hashHandlerAttached = false;
 let pendingFlash = null; // one-time banner shown after an action (e.g. "Approved ...")
+let lastPathKey = '';
+let signingOut = false;  // true while WE are signing out (so the SIGNED_OUT event does not navigate a second time)
+
+// ---------- cleanup registered once, run by endSession() ----------
+onSessionEnd(closeActiveModal);                  // any open approve / edit / reject dialog
+onSessionEnd(clearCache);                        // cached CRM snapshot + any load still in flight
+onSessionEnd(() => auth.disarmIdleTimeout());
+onSessionEnd(() => { renderToken++; main = null; pendingFlash = null; }); // drop any render still in progress
+onSessionEnd(() => { if (shell) shell.destroy(); });                       // mobile drawer, its listeners, scroll lock
+onSessionEnd(() => {                                                        // search text in the address bar
+  try {
+    const parsed = parseHash(window.location.hash);
+    window.history.replaceState(null, '', buildHash(parsed.segments, {}));
+  } catch (e) { /* not critical */ }
+  document.title = 'Command Center';
+});
 
 // ---------- frame guard ----------
 // GitHub Pages cannot send frame-ancestors / X-Frame-Options, so refuse to show anything
@@ -39,20 +69,12 @@ function notFramed() {
   return false;
 }
 
-// ---------- routing helpers ----------
-function parseHash() {
-  const raw = window.location.hash.replace(/^#\/?/, '');
-  const parts = raw.split('/');
-  const name = Object.prototype.hasOwnProperty.call(ROUTES, parts[0]) ? parts[0] : DEFAULT_ROUTE;
-  let param = null;
-  if (parts[1]) {
-    try {
-      param = decodeURIComponent(parts[1]);
-    } catch (e) {
-      param = null;
-    }
-  }
-  return { name: name, param: param };
+// ---------- routing ----------
+function resolveRoute() {
+  const parsed = parseHash(window.location.hash);
+  const known = Object.prototype.hasOwnProperty.call(ROUTES, parsed.segments[0]);
+  const segments = known ? parsed.segments : [DEFAULT_ROUTE];
+  return { name: segments[0], segments: segments, params: parsed.params };
 }
 
 // ---------- gate / app mounting ----------
@@ -63,62 +85,26 @@ async function route() {
 }
 
 function mountGate(state) {
-  auth.disarmIdleTimeout();
-  clearCache();
+  endSession(); // BEFORE the sign-in screen is drawn
+  shell = null;
   main = null;
   pendingFlash = null;
+  lastPathKey = '';
   renderToken++;
   auth.renderGate(root, state, () => route());
 }
 
 function mountApp(state) {
-  clear(root);
-
-  navLinks = Object.keys(ROUTES).map((name) =>
-    h('a', { class: 'cc-nav-link', href: '#/' + name, 'data-route': name, text: ROUTES[name].label })
-  );
-
-  const refreshBtn = h('button', { type: 'button', class: 'cc-btn', text: 'Refresh data' });
-  const signOutBtn = h('button', { type: 'button', class: 'cc-btn', text: 'Sign out' });
-
-  refreshBtn.addEventListener('click', async () => {
-    refreshBtn.disabled = true;
-    try {
-      await getSnapshot({ force: true });
-    } catch (err) {
-      handleLoadError(err);
-      refreshBtn.disabled = false;
-      return;
-    }
-    refreshBtn.disabled = false;
-    renderRoute();
+  shell = createShell({
+    root: root,
+    email: state.email || '',
+    onSignOut: () => signOutAndGate(),
+    onRefresh: () => reload()
   });
+  main = shell.main;
+  lastPathKey = '';
 
-  signOutBtn.addEventListener('click', async () => {
-    await auth.signOut();
-    route();
-  });
-
-  main = h('main', { class: 'cc-main', id: 'cc-main' });
-
-  root.appendChild(h('header', { class: 'cc-header' },
-    h('div', { class: 'cc-brand' },
-      h('span', { class: 'cc-brand-name', text: 'Stark Tech Studios' }),
-      h('span', { class: 'cc-brand-sub', text: 'Command Center' })
-    ),
-    h('span', { class: 'cc-badge cc-badge-controlled', text: 'Phase 2 · controlled writes' }),
-    h('nav', { class: 'cc-nav', 'aria-label': 'Command Center sections' }, navLinks),
-    h('div', { class: 'cc-header-actions' },
-      h('span', { class: 'cc-user', text: state.email || '' }),
-      refreshBtn, signOutBtn
-    )
-  ));
-  root.appendChild(main);
-
-  auth.armIdleTimeout(async () => {
-    await auth.signOut('You were signed out after a period of inactivity.');
-    route();
-  });
+  auth.armIdleTimeout(() => signOutAndGate('You were signed out after a period of inactivity.'));
 
   if (!hashHandlerAttached) {
     window.addEventListener('hashchange', () => {
@@ -130,27 +116,65 @@ function mountApp(state) {
 }
 
 async function renderRoute() {
-  if (!main) return;
-  const current = parseHash();
-  navLinks.forEach((link) => {
-    if (link.getAttribute('data-route') === current.name) link.setAttribute('aria-current', 'page');
-    else link.removeAttribute('aria-current');
-  });
+  if (!main || !shell) return;
+  const r = resolveRoute();
+
+  // Old links: #/pipeline/<id> now lives at #/prospects/<id>.
+  if (r.name === 'pipeline' && r.segments[1]) {
+    window.location.replace(buildHash(['prospects', r.segments[1]], {}));
+    return;
+  }
+
+  const entry = navEntry(r.name);
+  shell.setRoute({ name: r.name, title: entry.label, crumbs: [{ label: entry.group }, { label: entry.label }] });
 
   const token = ++renderToken;
   clear(main);
-  main.appendChild(h('p', { class: 'cc-muted', text: 'Loading…' }));
+  main.setAttribute('aria-busy', 'true');
+  main.appendChild(loadingState());
 
   try {
     const snap = await getSnapshot();
-    if (token !== renderToken || !main) return; // a newer navigation replaced this one
+    if (token !== renderToken || !main || !shell) return; // a newer navigation, or the session ended
+
+    const route = ROUTES[r.name];
+    const view = r.name === 'prospects' && r.segments[1] ? route.detail : route.view;
+    const ctx = {
+      snap: snap,
+      route: r,
+      param: r.segments[1] || null,
+      reload: reload,
+      flash: flash,
+      sessionExpired: sessionExpired
+    };
+
     clear(main);
-    ROUTES[current.name].view.render(main, { snap: snap, param: current.param, reload: reload, flash: flash });
+    main.removeAttribute('aria-busy');
+    view.render(main, ctx);
+
+    shell.setRoute({
+      name: r.name,
+      title: view.title || entry.label,
+      crumbs: typeof view.crumbs === 'function' ? view.crumbs(ctx) : [{ label: entry.group }, { label: entry.label }]
+    });
+    shell.setUpdated(snap.loadedAt);
+    shell.setBadges({ queue: snap.messages.filter(isAwaitingApproval).length });
+
     if (pendingFlash) {
       main.insertBefore(notice(pendingFlash.kind, pendingFlash.text), main.firstChild);
       pendingFlash = null;
     }
-    main.appendChild(h('p', { class: 'cc-footnote', text: 'Data loaded ' + fmtDateTime(snap.loadedAt) }));
+
+    // Moving to a different page: start at the top and put keyboard focus on the page. Filter changes and
+    // refreshes on the same page keep their place. On the very first draw after loading or signing in, focus
+    // stays at the top of the document so the first Tab reaches "Skip to content".
+    const key = r.segments.join('/');
+    if (key !== lastPathKey) {
+      const firstDraw = lastPathKey === '';
+      lastPathKey = key;
+      window.scrollTo(0, 0);
+      if (!firstDraw) shell.focusMain();
+    }
   } catch (err) {
     if (token !== renderToken) return;
     handleLoadError(err);
@@ -161,26 +185,51 @@ function flash(kind, text) {
   pendingFlash = { kind: kind, text: text };
 }
 
-/** Re-read the database and redraw the current screen (used after an action completes). */
+/** Re-read the database and redraw the current screen (Refresh button, and after an action completes). */
 async function reload() {
-  if (!main) return;
+  if (!main || !shell) return;
+  shell.setRefreshing(true);
   try {
     await getSnapshot({ force: true });
   } catch (err) {
+    if (shell) shell.setRefreshing(false);
     handleLoadError(err);
     return;
   }
+  if (shell) shell.setRefreshing(false);
   renderRoute();
 }
 
 function handleLoadError(err) {
   if (err && err.authExpired) {
-    auth.signOut('Your session expired. Please sign in again.').then(() => route());
+    sessionExpired('Your session expired. Please sign in again.');
     return;
   }
   if (!main) return;
   clear(main);
-  main.appendChild(notice('error', (err && err.message) ? err.message : 'Something went wrong while loading data.'));
+  main.removeAttribute('aria-busy');
+  main.appendChild(errorState(
+    (err && err.message) ? err.message : 'Something went wrong while loading data.',
+    () => renderRoute()
+  ));
+}
+
+// ---------- signing out (every path) ----------
+async function signOutAndGate(noticeText) {
+  if (signingOut) return;
+  signingOut = true;
+  try {
+    endSession();                    // dialogs, drawer, cached data and search state are gone immediately
+    await auth.signOut(noticeText);  // then the server-side sign-out
+    await route();                   // then the sign-in screen
+  } finally {
+    signingOut = false;
+  }
+}
+
+/** Passed to views: an action (or load) discovered the session is no longer valid. */
+function sessionExpired(text) {
+  return signOutAndGate(text || 'Your session expired. Please sign in again.');
 }
 
 // ---------- boot ----------
@@ -200,7 +249,10 @@ function boot() {
 
   sb.auth.onAuthStateChange((event) => {
     // Deferred on purpose: do not call Supabase from inside this callback.
-    if (event === 'SIGNED_OUT') setTimeout(() => { if (main) route(); }, 0);
+    if (event !== 'SIGNED_OUT') return;
+    const wasShowingApp = !!main;
+    endSession();
+    if (wasShowingApp && !signingOut) setTimeout(() => route(), 0);
   });
 
   // Back/forward cache could resurrect an old screen; reload so the gate re-checks the session.
