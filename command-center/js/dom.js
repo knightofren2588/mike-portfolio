@@ -13,7 +13,7 @@ const ALLOWED_ATTRS = new Set([
   'id', 'type', 'name', 'for', 'value', 'placeholder', 'autocomplete', 'inputmode',
   'pattern', 'maxlength', 'minlength', 'required', 'disabled', 'role', 'title',
   'colspan', 'scope', 'href', 'tabindex', 'spellcheck', 'selected', 'rows',
-  'checked', 'rel', 'hidden'
+  'checked', 'rel', 'hidden', 'max'
 ]);
 
 /**

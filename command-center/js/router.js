@@ -12,6 +12,7 @@ import { getSnapshot, clearCache, isAwaitingApproval } from './api.js';
 import { h, clear, notice } from './dom.js';
 import { closeActiveModal } from './modal.js';
 import { endSession, onSessionEnd } from './utilities/session.js';
+import { getInsights } from './utilities/insights.js';
 import { parseHash, buildHash } from './utilities/query.js';
 import { createShell, navEntry } from './components/shell.js';
 import { errorState, loadingState } from './components/ui.js';
@@ -158,7 +159,7 @@ async function renderRoute() {
       crumbs: typeof view.crumbs === 'function' ? view.crumbs(ctx) : [{ label: entry.group }, { label: entry.label }]
     });
     shell.setUpdated(snap.loadedAt);
-    shell.setBadges({ queue: snap.messages.filter(isAwaitingApproval).length });
+    shell.setBadges({ queue: snap.messages.filter(isAwaitingApproval).length, status: statusBadgeCount(snap) });
 
     if (pendingFlash) {
       main.insertBefore(notice(pendingFlash.kind, pendingFlash.text), main.firstChild);
@@ -178,6 +179,18 @@ async function renderRoute() {
   } catch (err) {
     if (token !== renderToken) return;
     handleLoadError(err);
+  }
+}
+
+/**
+ * The System Status badge counts true machinery exceptions ONLY (failed messages and scheduled messages stuck past the
+ * threshold). It is not a to-do count: ordinary drafts, overdue follow-ups, reviews and expected waiting never light it.
+ */
+function statusBadgeCount(snap) {
+  try {
+    return getInsights(snap).systemHealth.badgeCount;
+  } catch (e) {
+    return 0; // a problem computing the badge must never stop a page from drawing
   }
 }
 

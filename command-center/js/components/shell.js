@@ -20,7 +20,7 @@ export const NAV = [
     ]
   },
   { group: 'Activity', items: [{ route: 'activity', label: 'Activity Feed' }] },
-  { group: 'Automation', items: [{ route: 'status', label: 'System Status' }] }
+  { group: 'Automation', items: [{ route: 'status', label: 'System Status', badge: 'status', alert: true }] }
 ];
 
 export function navEntry(route) {
@@ -32,7 +32,7 @@ export function navEntry(route) {
   return { group: '', label: '' };
 }
 
-const BADGE_TITLES = { queue: ' awaiting approval' };
+const BADGE_TITLES = { queue: ' awaiting approval', status: ' system exceptions' };
 
 export function createShell(options) {
   const root = options.root;
@@ -45,7 +45,7 @@ export function createShell(options) {
     h('div', { class: 'cc-nav-group' },
       h('div', { class: 'cc-nav-heading', text: group.group }),
       group.items.map((item) => {
-        const badgeEl = item.badge ? h('span', { class: 'cc-nav-badge', hidden: true }) : null;
+        const badgeEl = item.badge ? h('span', { class: 'cc-nav-badge' + (item.alert ? ' cc-nav-badge-alert' : ''), hidden: true }) : null;
         const link = h('a', { class: 'cc-nav-link', href: '#/' + item.route, 'data-route': item.route },
           h('span', { text: item.label }), badgeEl);
         link.addEventListener('click', () => closeDrawer(false));

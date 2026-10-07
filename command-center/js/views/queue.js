@@ -16,7 +16,7 @@ import { h, notice, badge, textBlock, emptyState, fmtRange, fmtDateTime } from '
 import {
   isAwaitingApproval, isApprovedWaiting, senderWarning, approvalBlocker, isApprovableType, isDoNotContact, isSuppressed
 } from '../api.js';
-import { hrefProspect } from '../utilities/query.js';
+import { hrefProspect, pickEnum, pickText } from '../utilities/query.js';
 import { messageTypeLabel } from '../utilities/labels.js';
 import { onSessionEnd } from '../utilities/session.js';
 import { messageStatusBadge, statusBadge, renderValue } from '../components/ui.js';
@@ -186,7 +186,7 @@ function queueCard(message, prospect, snap, ctx, kind) {
   if (actionable && prospect && p.lead_score !== null && p.lead_score !== undefined) badges.push(badge('Score ' + p.lead_score, 'score'));
   if (dnc) badges.push(badge('Do not contact', 'danger'));
 
-  const card = h('article', { class: 'cc-card cc-qcard cc-qcard-' + kind },
+  const card = h('article', { class: 'cc-card cc-qcard cc-qcard-' + kind, id: cid, tabindex: '-1' },
     h('header', { class: 'cc-qhead' },
       // The company name opens the full prospect page (the whole history in one place).
       prospect
@@ -240,6 +240,14 @@ function byNewest(a, b) {
   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 }
 
+// Which of the four sections a message belongs in.
+function groupKey(m) {
+  if (isAwaitingApproval(m)) return 'awaiting';
+  if (isApprovedWaiting(m) || m.status === 'scheduled') return 'waiting';
+  if (m.status === 'failed') return 'failed';
+  return 'history';
+}
+
 const SECTIONS = [
   ['awaiting', 'Awaiting approval', 'No drafts are waiting for approval.'],
   ['waiting', 'Approved / waiting to send', 'Nothing is approved and waiting.'],
@@ -255,12 +263,20 @@ export function render(container, ctx) {
     'Approving a draft only marks it ready: n8n sends it. Command Center never sends email itself.'));
 
   const groups = { awaiting: [], waiting: [], failed: [], history: [] };
-  snap.messages.slice().sort(byNewest).forEach((m) => {
-    if (isAwaitingApproval(m)) groups.awaiting.push(m);
-    else if (isApprovedWaiting(m) || m.status === 'scheduled') groups.waiting.push(m);
-    else if (m.status === 'failed') groups.failed.push(m);
-    else groups.history.push(m);
-  });
+  snap.messages.slice().sort(byNewest).forEach((m) => groups[groupKey(m)].push(m));
+
+  // Display-only deep links from the dashboards:  #/queue?section=failed  or  #/queue?msg=<message id>.
+  // The URL is untrusted: the section is checked against an allowlist and the id is only used to look a message up.
+  const params = (ctx.route && ctx.route.params) || {};
+  let targetKey = pickEnum(params.section, ['awaiting', 'waiting', 'failed', 'history'], '');
+  let targetMessage = null;
+  const wantedId = pickText(params.msg, 80);
+  if (wantedId) {
+    targetMessage = snap.messages.find((m) => String(m.id) === wantedId) || null;
+    if (targetMessage) targetKey = groupKey(targetMessage);
+    else container.appendChild(notice('warn', 'That message is not in the loaded data. It may have been removed.'));
+  }
+  if (targetKey) ui.sections[targetKey] = true; // make sure its section is open on a phone
 
   const prospectOf = (m) => snap.prospectsById.get(String(m.prospect_id));
 
@@ -278,4 +294,17 @@ export function render(container, ctx) {
       onToggle: (isOpen) => { ui.sections[key] = isOpen; }
     }));
   });
+
+  if (targetKey) {
+    const later = typeof window.requestAnimationFrame === 'function' ? window.requestAnimationFrame.bind(window) : (f) => setTimeout(f, 0);
+    later(() => {
+      const el = targetMessage
+        ? document.getElementById('cc-q-' + String(targetMessage.id).replace(/[^A-Za-z0-9_-]/g, ''))
+        : (document.getElementById('cc-qs-' + targetKey + '-body') || {}).parentElement;
+      if (!el) return;
+      if (targetMessage) el.classList.add('is-target');
+      if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: targetMessage ? 'center' : 'start' });
+      if (targetMessage && typeof el.focus === 'function') el.focus({ preventScroll: true });
+    });
+  }
 }

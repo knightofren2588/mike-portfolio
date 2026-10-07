@@ -52,3 +52,59 @@ export const LEAD_SCORE_BANDS = { high: 70, medium: 40 };
 
 // Prospects page: rows rendered at a time before "Show more".
 export const PROSPECT_PAGE_SIZE = 50;
+
+// =====================================================================================================
+// Phase 3B: operations intelligence (Overview, System Status, and the future Stark AI layer)
+// =====================================================================================================
+
+// Thresholds and ordering for the "Needs attention" and system-health logic.
+// A threshold of null means OFF. Nothing is flagged by elapsed time alone unless you turn it on here.
+export const ATTENTION = {
+  // status = 'scheduled' is the claim / in-flight state immediately before an email send, and a working sender
+  // clears it within seconds. A scheduled message whose scheduled_at is older than this is treated as a system
+  // exception ("may be stuck"). This relies on scheduled_at holding the CLAIM time. If scheduled_at is empty the
+  // age is unknown, and the message is shown as in flight without being flagged.
+  scheduledStuckMinutes: 15,
+
+  // OFF: an approved message waiting for a sender that is intentionally not published is expected, not a fault.
+  approvedWaitingWarnMinutes: null,
+
+  // OFF: no reliable production schedule exists yet, so a quiet automation is never called stale.
+  evidenceStaleHours: null,
+
+  // Ranked next actions and the order of the Needs Attention cards (highest priority first).
+  nextActionOrder: ['replies', 'failed', 'stuck', 'drafts', 'overdue', 'review', 'waiting'],
+  nextActionCount: 3,
+
+  listLimit: 5,            // items shown per list on the dashboards
+  recentActivityLimit: 8,  // newest CRM events on the Overview
+  noiseActivityTypes: []   // activity types to hide from "Recent activity" (none by default)
+};
+
+// The automations shown under System Health / System Status.
+// Command Center cannot see n8n: "published" is YOUR setting, and every screen words it "according to Command Center
+// configuration". For sender systems the flag comes from SENDER_WORKFLOWS above (one source of truth). For the other
+// systems it is set here: true / false, or null = not tracked.
+export const AUTOMATION_SYSTEMS = [
+  {
+    key: 'initial_sender', label: 'Initial Approved Sender', kind: 'sender', messageTypes: ['initial'],
+    capability: 'Sends approved first-contact (initial) messages.',
+    evidenceActivityTypes: ['initial_sent', 'initial_send_failed']
+  },
+  {
+    key: 'followup_sender', label: 'Follow-Up Sender', kind: 'sender', messageTypes: ['followup_1', 'followup_2'],
+    capability: 'Sends approved follow-up messages.',
+    evidenceActivityTypes: ['followup_1_sent', 'followup_2_sent', 'followup_1_send_failed', 'followup_2_send_failed'],
+    includesOverdueFollowups: true
+  },
+  {
+    key: 'reply_detection', label: 'Reply Detection', kind: 'replies', published: true,
+    capability: 'Detects prospect replies and updates the prospect.',
+    evidenceActivityTypes: ['reply_received']
+  },
+  {
+    key: 'intake', label: 'Prospecting / Intake', kind: 'intake', published: null,
+    capability: 'Finds and researches prospects, and drafts outreach for your review.',
+    evidenceActivityTypes: []
+  }
+];

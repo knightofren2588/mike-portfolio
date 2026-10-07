@@ -1,79 +1,58 @@
-// System Status: INFERRED from database timestamps. It does not talk to n8n.
-// "Quiet" does not mean "broken" (nothing may have been due), so there are no pass/fail lights here.
+// System Status: one card per automation, built from DATABASE EVIDENCE and Command Center configuration.
 //
-// Desktop: a table. Phone / tablet (<= 960px): each automation becomes a card (system, evidence used, last seen,
-// age, backlog) restyled by cc.css, not a squeezed table.
+// THIS IS NOT LIVE n8n TELEMETRY. Command Center cannot see n8n, so it never says a workflow is running, live or
+// healthy. It shows: what config.js says the system is for, whether YOU marked it as published, the newest database
+// record that points to it, how old that record is, what is backlogged, and any EXPLICIT exceptions (failed messages,
+// scheduled messages stuck past the threshold). A quiet system is never called stale: time-based staleness is off.
 
-import {
-  h, notice, section, fmtDateTime, fmtRelative, humanize, emptyState
-} from '../dom.js';
-import { isApprovedWaiting, isFollowupDue, latestTimestamp } from '../api.js';
+import { h, notice, fmtDateTime, fmtRelative, humanize, emptyState } from '../dom.js';
+import { getInsights } from '../utilities/insights.js';
+import { block, healthCard } from '../components/dashboard.js';
+import { activityLabel } from '../utilities/labels.js';
 
-function plural(n, one, many) {
-  return n + ' ' + (n === 1 ? one : many);
-}
+export const title = 'System Status';
 
-function statusRow(system, evidence, when, now, backlog) {
-  return h('tr', { class: 'cc-srow' },
-    h('td', { class: 'cc-scell-system', 'data-label': 'System', text: system }),
-    h('td', { class: 'cc-muted', 'data-label': 'Evidence used', text: evidence }),
-    h('td', { 'data-label': 'Last seen', text: when ? fmtDateTime(when) : 'No data yet' }),
-    h('td', { 'data-label': 'Age', text: when ? fmtRelative(when, now) : '—' }),
-    h('td', { 'data-label': 'Backlog', text: backlog })
-  );
-}
-
-function latestActivity(snap, type) {
-  return latestTimestamp(snap.activities.filter((a) => a.activity_type === type).map((a) => a.created_at));
+function thresholdText(minutes, onText) {
+  return minutes === null || minutes === undefined ? 'off' : onText(minutes);
 }
 
 export function render(container, ctx) {
   const snap = ctx.snap;
   const now = new Date();
+  const ins = getInsights(snap, { now: now });
+  const sh = ins.systemHealth;
+  const th = ins.meta.thresholds;
 
   container.appendChild(h('h1', { class: 'cc-h1', text: 'System Status' }));
   container.appendChild(notice('info',
-    'Inferred from timestamps in the database. This is not live n8n state. A quiet system may simply have had nothing to do.'));
+    'Inferred from database evidence and Command Center configuration. This is not live n8n telemetry. ' +
+    'A quiet system may simply have had nothing to do, so quiet is never treated as a fault.'));
 
-  const lastReplyActivity = latestActivity(snap, 'reply_received');
-  const lastRepliedAt = latestTimestamp(snap.prospects.map((p) => p.replied_at));
-  const lastFollowupSent = latestActivity(snap, 'followup_1_sent');
-  const lastSentMessage = latestTimestamp(snap.messages.map((m) => m.sent_at));
-  const lastProspectCreated = latestTimestamp(snap.prospects.map((p) => p.created_at));
+  container.appendChild(h('p', { class: sh.badgeCount ? 'cc-status-summary is-exception' : 'cc-status-summary', role: 'status',
+    text: sh.badgeCount
+      ? sh.badgeCount + ' system ' + (sh.badgeCount === 1 ? 'exception' : 'exceptions') + ' in the database: failed or possibly stuck messages.'
+      : 'No failed or stuck messages recorded in the database.' }));
 
-  const waiting = snap.messages.filter(isApprovedWaiting);
-  const oldestWaiting = waiting.length
-    ? waiting.map((m) => new Date(m.created_at).getTime()).reduce((a, b) => Math.min(a, b))
-    : null;
-  const due = snap.prospects.filter((p) => isFollowupDue(p, now));
+  if (sh.unassigned.failed || sh.unassigned.stuck) {
+    container.appendChild(notice('error',
+      'Some failed or stuck messages belong to a message type that no configured automation handles (' +
+      sh.unassigned.failed + ' failed, ' + sh.unassigned.stuck + ' stuck). They are still counted above and listed in the Approval Queue.'));
+  }
 
-  container.appendChild(section('Automations (by last evidence)',
-    h('div', { class: 'cc-table-wrap' },
-      h('table', { class: 'cc-table cc-stable' },
-        h('caption', { class: 'cc-sr-only', text: 'Automations, inferred from database evidence' }),
-        h('thead', {}, h('tr', {},
-          h('th', { scope: 'col', text: 'System' }),
-          h('th', { scope: 'col', text: 'Evidence used' }),
-          h('th', { scope: 'col', text: 'Last seen' }),
-          h('th', { scope: 'col', text: 'Age' }),
-          h('th', { scope: 'col', text: 'Backlog' })
-        )),
-        h('tbody', {},
-          statusRow('Reply detection', 'newest reply_received activity', lastReplyActivity || lastRepliedAt, now, 'None tracked'),
-          statusRow('Follow-up engine', 'newest followup_1_sent activity', lastFollowupSent, now, plural(due.length, 'follow-up due', 'follow-ups due') + ' (approx.)'),
-          statusRow('Approved sender', 'newest message sent_at', lastSentMessage, now, plural(waiting.length, 'approved message', 'approved messages') + ' waiting to send'),
-          statusRow('Prospecting system', 'newest prospect created_at', lastProspectCreated, now, 'None tracked')
-        )
-      )
-    )
-  ));
+  container.appendChild(block('Automations',
+    h('div', { class: 'cc-health-grid cc-health-grid-full' }, sh.systems.map((s) => healthCard(s, now, false))),
+    { id: 'cc-st-automations' }));
 
-  container.appendChild(section('Backlog',
-    h('ul', { class: 'cc-list' },
-      h('li', { text: 'Approved but not yet sent: ' + waiting.length + (oldestWaiting ? ' (oldest drafted ' + fmtRelative(new Date(oldestWaiting), now) + ')' : '') }),
-      h('li', { text: 'Follow-ups past due (approximate): ' + due.length })
-    )
-  ));
+  container.appendChild(block('Rules in effect', h('ul', { class: 'cc-list' },
+    h('li', { text: 'Scheduled messages: flagged as possibly stuck after ' + thresholdText(th.scheduledStuckMinutes, (m) => m + ' minutes') +
+      ' (status "scheduled" is the in-flight claim state, aged from scheduled_at).' }),
+    h('li', { text: 'Approved messages waiting too long: ' + thresholdText(th.approvedWaitingWarnMinutes, (m) => 'warning after ' + m + ' minutes') +
+      '. Waiting for a sender that is not marked as published is expected, not a fault.' }),
+    h('li', { text: 'Time-based staleness of a quiet system: ' + thresholdText(th.evidenceStaleHours, (hrs) => 'warning after ' + hrs + ' hours') +
+      '. Off until real production schedules exist.' }),
+    h('li', { text: 'Failed messages are always an exception until resolved or removed.' }),
+    h('li', { text: 'The navigation badge counts only failed and stuck messages, never ordinary work.' })
+  ), { id: 'cc-st-rules' }));
 
   // Newest activity per type, from whatever types actually exist.
   const types = new Map();
@@ -83,14 +62,12 @@ export function render(container, ctx) {
     if (!types.has(key) || t > types.get(key)) types.set(key, t);
   });
   const rows = Array.from(types.entries()).sort((a, b) => b[1] - a[1]);
-  container.appendChild(section('Newest activity by type',
+  container.appendChild(block('Newest activity by type',
     rows.length
       ? h('ul', { class: 'cc-list' }, rows.map((entry) =>
-          h('li', { text: humanize(entry[0]) + ': ' + fmtDateTime(new Date(entry[1])) + ' (' + fmtRelative(new Date(entry[1]), now) + ')' })))
-      : emptyState('No activity recorded yet.')
-  ));
+          h('li', { text: activityLabel(entry[0]) + ': ' + fmtDateTime(new Date(entry[1])) + ' (' + fmtRelative(new Date(entry[1]), now) + ')' })))
+      : emptyState('No CRM activity recorded yet.'),
+    { id: 'cc-st-activity' }));
 
-  container.appendChild(section('Data freshness',
-    h('p', { class: 'cc-muted', text: 'This page last loaded ' + fmtDateTime(snap.loadedAt) + '. Use Refresh in the top bar to re-read the database.' })
-  ));
+  container.appendChild(h('p', { class: 'cc-muted', text: 'This page last loaded ' + fmtDateTime(snap.loadedAt) + '. Use Refresh in the top bar to re-read the database.' }));
 }

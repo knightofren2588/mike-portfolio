@@ -23,6 +23,27 @@ export const STATUS_META = {
 /** All real prospect statuses, in sales order. */
 export const PROSPECT_STATUSES = Object.keys(STATUS_META);
 
+// The four pipeline phases, built from the single mapping above (STATUS_META[...].phase) so that Overview,
+// System Status, the Pipeline and the future Stark AI all share ONE definition. Do not copy these lists elsewhere.
+//   Intake:   researched, needs_review          Outreach: approved, sent, followup_1, followup_2
+//   Engaged:  replied, qualified, proposal      Closed:   won, lost, closed, do_not_contact
+const PHASE_ORDER = [
+  { key: 'intake', label: 'Intake' },
+  { key: 'outreach', label: 'Outreach' },
+  { key: 'engaged', label: 'Engaged' },
+  { key: 'closed', label: 'Closed' }
+];
+export const PHASES = PHASE_ORDER.map((p) => ({
+  key: p.key,
+  label: p.label,
+  statuses: PROSPECT_STATUSES.filter((s) => STATUS_META[s].phase === p.key)
+}));
+
+/** 'intake' | 'outreach' | 'engaged' | 'closed', or null for a status that is not in the list. */
+export function phaseOf(status) {
+  return STATUS_META[status] ? STATUS_META[status].phase : null;
+}
+
 export function statusLabel(status) {
   return STATUS_META[status] ? STATUS_META[status].label : humanize(status);
 }
