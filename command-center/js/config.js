@@ -108,3 +108,29 @@ export const AUTOMATION_SYSTEMS = [
     evidenceActivityTypes: []
   }
 ];
+
+// =====================================================================================================
+// Phase 4A: Stark AI (read-only AI copilot)
+// =====================================================================================================
+// OFF BY DEFAULT. While enabled is false the Command Center makes NO network request for Stark AI and shows no
+// Stark AI "available" state. Turn it on only after the Supabase Edge Function "stark-ai" has been deployed,
+// its secrets configured, and you have approved it. PUBLIC VALUES ONLY: no API key belongs here (the Anthropic key
+// lives only in Supabase Edge Function secrets, never in this folder).
+//
+// The limits below mirror the server's limits (the server enforces its own and rejects anything larger).
+export const STARK_AI = Object.freeze({
+  enabled: false,
+  functionName: 'stark-ai',
+
+  requestTimeoutMs: 55 * 1000,        // client gives up after this (the server's own model timeout is shorter)
+  pingTimeoutMs: 15 * 1000,
+  minSecondsBetweenRequests: 2,       // cooldown after each question
+  minSecondsBetweenPings: 10,
+
+  maxMessageChars: 2000,              // one question
+  historyMaxEntries: 8,               // 4 question/answer pairs sent with each request
+  historyEntryChars: 4000,
+  historyTotalChars: 12000,
+  storedMessagesMax: 20,              // what is kept in memory for display (memory only, never saved)
+  replyMaxChars: 12000
+});

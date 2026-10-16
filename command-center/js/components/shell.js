@@ -2,6 +2,9 @@
 // "Updated" time and a Refresh button.
 //
 // This file only builds navigation and layout. It has no access to data and makes no network calls.
+// OPTIONAL Stark AI: when the router passes options.aiPanel (only when STARK_AI.enabled is true), the shell adds a
+// "Stark AI" button to the sidebar and to the top bar (phones), mounts the panel beside the page, and keeps the page
+// behind a full-screen sheet inert. With no aiPanel, none of that exists and the shell behaves exactly as before.
 // On sign-out the router calls endSession(), which runs this shell's cleanup (closes the drawer, removes its
 // listeners and the scroll lock) before the sign-in screen is shown.
 
@@ -36,6 +39,9 @@ const BADGE_TITLES = { queue: ' awaiting approval', status: ' system exceptions'
 
 export function createShell(options) {
   const root = options.root;
+  const aiPanel = options.aiPanel || null;
+  let aiNavBtn = null;
+  let aiTopBtn = null;
   const links = new Map();
   const badges = new Map();
   let drawerOpen = false;
@@ -55,6 +61,16 @@ export function createShell(options) {
       })
     )
   );
+
+  if (aiPanel) {
+    aiNavBtn = h('button', {
+      type: 'button', class: 'cc-nav-link cc-ai-nav', 'aria-controls': 'cc-ai-panel', 'aria-expanded': 'false'
+    }, h('span', { text: 'Stark AI' }), h('span', { class: 'cc-ai-nav-tag', text: 'Read-only' }));
+    navGroups.push(h('div', { class: 'cc-nav-group' },
+      h('div', { class: 'cc-nav-heading', text: 'Assistant' }),
+      aiNavBtn
+    ));
+  }
 
   const closeBtn = h('button', { type: 'button', class: 'cc-btn cc-drawer-close', text: 'Close' });
   const signOutBtn = h('button', { type: 'button', class: 'cc-btn cc-signout', text: 'Sign out' });
@@ -88,8 +104,12 @@ export function createShell(options) {
   refreshBtn.addEventListener('click', () => options.onRefresh());
   menuBtn.addEventListener('click', () => (drawerOpen ? closeDrawer(true) : openDrawer()));
 
+  if (aiPanel) {
+    aiTopBtn = h('button', { type: 'button', class: 'cc-btn cc-ai-topbtn', text: 'Stark AI', 'aria-controls': 'cc-ai-panel', 'aria-expanded': 'false' });
+  }
+
   const topbar = h('header', { class: 'cc-topbar' },
-    menuBtn, crumbs,
+    menuBtn, aiTopBtn, crumbs,
     h('div', { class: 'cc-topbar-right' }, updated, refreshBtn)
   );
 
@@ -101,9 +121,11 @@ export function createShell(options) {
   const scrim = h('div', { class: 'cc-scrim' });
   scrim.addEventListener('click', () => closeDrawer(true));
 
+  const content = h('div', { class: 'cc-content' }, topbar, main);
   const shell = h('div', { class: 'cc-shell' },
     skip, sidebar, scrim,
-    h('div', { class: 'cc-content' }, topbar, main)
+    content,
+    aiPanel ? aiPanel.element : null
   );
   clear(root);
   root.appendChild(shell);
@@ -161,7 +183,44 @@ export function createShell(options) {
     else if (typeof wide.addListener === 'function') wide.addListener(onWide);
   }
 
-  const cleanup = () => closeDrawer(false);
+  // ----- Stark AI (only when the router supplied a panel) -----
+  let offAi = null;
+  function applyAi(info) {
+    const on = !!info.open;
+    [aiNavBtn, aiTopBtn].forEach((btn) => {
+      if (!btn) return;
+      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      btn.classList.toggle('is-open', on);
+    });
+    shell.classList.toggle('cc-ai-open', on);
+    // A full-screen sheet is modal: the page behind it is inert (not reachable by keyboard, mouse or screen reader)
+    // and does not scroll. On a desktop layout the page stays fully usable beside the panel.
+    const modal = on && !!info.sheet;
+    document.body.classList.toggle('cc-ai-sheet', modal);
+    [sidebar, content, skip].forEach((el) => {
+      if (modal) el.setAttribute('inert', '');
+      else el.removeAttribute('inert');
+    });
+    if (modal) closeDrawer(false); // opening Stark AI closes the phone navigation drawer
+  }
+  if (aiPanel) {
+    aiPanel.setTriggers([aiTopBtn, aiNavBtn]);
+    offAi = aiPanel.onChange(applyAi);
+    aiNavBtn.addEventListener('click', () => {
+      // From the phone drawer the nav button is about to be hidden, so focus should come back to the top-bar button.
+      closeDrawer(false);
+      aiPanel.toggle(aiPanel.isSheet() ? aiTopBtn : aiNavBtn);
+    });
+    aiTopBtn.addEventListener('click', () => aiPanel.toggle(aiTopBtn));
+  }
+
+  const cleanup = () => {
+    closeDrawer(false);
+    if (aiPanel) {
+      aiPanel.close(false);
+      applyAi({ open: false, sheet: false });
+    }
+  };
   onSessionEnd(cleanup);
 
   // ----- public API -----
@@ -220,6 +279,11 @@ export function createShell(options) {
 
     destroy() {
       closeDrawer(false);
+      if (aiPanel) {
+        if (offAi) offAi();
+        aiPanel.destroy();
+        applyAi({ open: false, sheet: false });
+      }
       if (wide) {
         if (typeof wide.removeEventListener === 'function') wide.removeEventListener('change', onWide);
         else if (typeof wide.removeListener === 'function') wide.removeListener(onWide);

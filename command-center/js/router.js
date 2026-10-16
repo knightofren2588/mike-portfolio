@@ -15,6 +15,10 @@ import { endSession, onSessionEnd } from './utilities/session.js';
 import { getInsights } from './utilities/insights.js';
 import { parseHash, buildHash } from './utilities/query.js';
 import { createShell, navEntry } from './components/shell.js';
+import { STARK_AI } from './config.js';
+import { starkAi, setAuthExpiredHandler } from './ai/starkAi.js';
+import { createStarkAiPanel } from './ai/starkAiPanel.js';
+import { checkAdminAccess } from './ai/starkAiAccess.js';
 import { errorState, loadingState } from './components/ui.js';
 import * as overview from './views/overview.js';
 import * as queue from './views/queue.js';
@@ -57,6 +61,45 @@ onSessionEnd(() => {                                                        // s
   document.title = 'Command Center';
 });
 
+// ---------- Stark AI (read-only copilot; built ONLY when STARK_AI.enabled is true) ----------
+// The panel is a UI state, not a route. It follows the page you are on: renderRoute() tells it the hash and the prospect's
+// company name.
+// A 401 from Stark AI is only a "could not verify this request" event: the panel shows a neutral message and we ask Supabase
+// (through the existing client) whether the Command Center sign-in is still valid. ONLY if Supabase confirms there is no
+// valid user do we use the SAME sign-out path as every other expired-session case (which wipes Stark AI through the normal
+// session cleanup). If the sign-in is valid, or Supabase cannot be reached to say either way, nothing is signed out.
+// No second auth flow.
+const aiEnabled = () => STARK_AI.enabled === true;
+// Stark AI is shown ONLY to a verified administrator. The check runs once per sign-in, ONLY when the feature is enabled, and
+// fails closed (any doubt = hidden). The server still enforces administrator access on every request; this just keeps a
+// button nobody else can use out of their sight.
+let aiAdmin = false;
+const aiActive = () => aiEnabled() && aiAdmin;
+onSessionEnd(() => { aiAdmin = false; });
+let aiAuthCheck = false;
+function supabaseSaysSignedOut(result) {
+  const error = result && result.error;
+  const user = result && result.data && result.data.user;
+  if (user) return false;                                          // valid
+  if (error && error.name === 'AuthRetryableFetchError') return false; // could not reach Supabase: no confirmation either way
+  return true;                                                     // no user, or Supabase rejected the token
+}
+setAuthExpiredHandler(async () => {
+  if (!aiActive() || !main || signingOut || aiAuthCheck) return;
+  aiAuthCheck = true;
+  try {
+    let result = null;
+    try {
+      result = await sb.auth.getUser();
+    } catch (e) {
+      return; // no answer from Supabase: not a confirmation, so nothing is signed out
+    }
+    if (supabaseSaysSignedOut(result)) await sessionExpired('Your session expired. Please sign in again.');
+  } finally {
+    aiAuthCheck = false;
+  }
+});
+
 // ---------- frame guard ----------
 // GitHub Pages cannot send frame-ancestors / X-Frame-Options, so refuse to show anything
 // if this page is loaded inside another site's frame (clickjacking defense).
@@ -81,8 +124,11 @@ function resolveRoute() {
 // ---------- gate / app mounting ----------
 async function route() {
   const state = await auth.getGateState();
-  if (state.stage === 'ready') mountApp(state);
-  else mountGate(state);
+  if (state.stage === 'ready') {
+    // Only when Stark AI is enabled: ask the database (as the signed-in user) whether this is an administrator.
+    aiAdmin = aiEnabled() ? await checkAdminAccess((name) => sb.rpc(name)) : false;
+    mountApp(state);
+  } else mountGate(state);
 }
 
 function mountGate(state) {
@@ -100,7 +146,8 @@ function mountApp(state) {
     root: root,
     email: state.email || '',
     onSignOut: () => signOutAndGate(),
-    onRefresh: () => reload()
+    onRefresh: () => reload(),
+    aiPanel: aiActive() ? createStarkAiPanel({ ai: starkAi }) : null
   });
   main = shell.main;
   lastPathKey = '';
@@ -125,6 +172,8 @@ async function renderRoute() {
     window.location.replace(buildHash(['prospects', r.segments[1]], {}));
     return;
   }
+
+  if (aiActive()) starkAi.setContextFromHash(window.location.hash); // Stark AI follows the page (and forgets the last prospect's name)
 
   const entry = navEntry(r.name);
   shell.setRoute({ name: r.name, title: entry.label, crumbs: [{ label: entry.group }, { label: entry.label }] });
@@ -152,6 +201,12 @@ async function renderRoute() {
     clear(main);
     main.removeAttribute('aria-busy');
     view.render(main, ctx);
+
+    if (aiActive() && view === route.detail) {
+      // Display-only company name for the panel header. Never sent anywhere; the server reads the prospect itself.
+      const found = snap.prospectsById && snap.prospectsById.get(String(r.segments[1]));
+      starkAi.setProspectLabel(found ? found.company_name : '');
+    }
 
     shell.setRoute({
       name: r.name,
