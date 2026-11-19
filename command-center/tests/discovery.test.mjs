@@ -53,7 +53,7 @@ test('category ideas are ALWAYS hypotheses; research facts show only what was st
   const h = D.hypothesesOf({ hypotheses: [{ service: 'Web design & development', status: 'confirmed', basis: 'category' }, { nope: 1 }] });
   assert.deepEqual(h, [{ service: 'Web design & development', basis: 'category' }], 'a stored status can never promote a hypothesis to a finding');
   assert.equal(D.researchFacts({}), null);
-  const f = D.researchFacts({ research_summary: { counts: { confirmed: 2, potential: 1, unknown: 3 }, opportunity: { ok: false, reason: 'No confirmed finding reached the minimum score.', held_back_for_authorized_assessment: ['security_headers'] } } });
+  const f = D.researchFacts({ research_summary: { identity: { verdict: 'match' }, counts: { confirmed: 2, potential: 1, unknown: 3 }, opportunity: { ok: false, reason: 'No confirmed finding reached the minimum score.', held_back_for_authorized_assessment: ['security_headers'] } } });
   assert.equal(f.opportunity, null); assert.match(f.noOpportunityReason, /No confirmed/); assert.deepEqual(f.heldBack, ['security_headers']);
   assert.match(D.scoreLines({ score_parts: { identity: 30, fit: 40, contact: 5, penalty: 10, independent_baseline: 2 } }).join(' | '), /penalty -10.*beyond the 2/);
   assert.equal(D.regionLabel('ross-chillicothe'), 'Ross / Chillicothe'); assert.equal(D.regionLabel('columbus-metro'), 'Columbus metro');
@@ -95,7 +95,7 @@ test('the Discovery screen never offers to verify, approve, contact or send', ()
 const MARK = D.HUMAN_VERIFIED_MARK;
 const prospect = (o) => ({ id: 'p1', contact_email: 'owner@acme.example', source_url: 'https://acme.example/contact', do_not_contact: false, status: 'new', evidence: MARK + 'Checked the site and the address myself.', ...o });
 const draft = { id: 'm1', prospect_id: 'p1', message_type: 'initial', status: 'draft', approved: false };
-const channel = (best) => ({ research_status: 'done', research_summary: { contact_channel: { best, pages_examined: 3, channels: best === 'none_found' ? [] : [{ type: best, evidence_source_url: 'https://acme.example/contact', evidence_snippet: 'A contact form is on the page.', domain: 'acme.example', own_domain: true }] } } });
+const channel = (best) => ({ research_status: 'done', research_summary: { identity: { verdict: 'match' }, contact_channel: { best, pages_examined: 3, channels: best === 'none_found' ? [] : [{ type: best, evidence_source_url: 'https://acme.example/contact', evidence_snippet: 'A contact form is on the page.', domain: 'acme.example', own_domain: true }] } } });
 const ready = { ...base, id: 'r', prospect_id: 'p1', crm_status: 'in_crm', ...channel('form') };
 const goodLink = { prospect: prospect(), messages: [draft], suppressed: false };
 
@@ -143,7 +143,7 @@ test('CONTACT CHANNEL: a kind plus the page it was seen on; no address or number
   assert.equal(D.contactOf(channel('none_found')).known, true);
   assert.equal(D.contactOf({}).known, false); assert.equal(D.contactOf(null).documented, false);
   assert.equal(D.contactOf({ research_summary: { contact_channel: { best: 'carrier_pigeon' } } }).known, false, 'an unknown kind is not trusted');
-  const messy = D.contactOf({ research_summary: { contact_channel: { best: 'email', channels: [{ type: 'sms', evidence_source_url: 'x' }, { type: 'email' }, { type: 'email', evidence_source_url: 'https://a.example/', evidence_snippet: 's', domain: 'a.example', own_domain: true }] } } });
+  const messy = D.contactOf({ research_summary: { identity: { verdict: 'match' }, contact_channel: { best: 'email', channels: [{ type: 'sms', evidence_source_url: 'x' }, { type: 'email' }, { type: 'email', evidence_source_url: 'https://a.example/', evidence_snippet: 's', domain: 'a.example', own_domain: true }] } } });
   assert.equal(messy.channels.length, 1, 'channels without a known type and a page URL are dropped');
   assert.match(D.CONTACT_NOT_CONSENT, /not consent/);
   assert.ok(!/\bconsent(ed)?\b(?!\s+to be contacted|\.)/i.test(JSON.stringify(D.CONTACT_TEXT)));
@@ -200,4 +200,64 @@ test('an installed but empty Discovery says so plainly and still shows job healt
   assert.match(src, /if \(!d\.rows\.length\)/);
   assert.match(src, /Discovery is installed and empty/);
   assert.ok(src.indexOf('Discovery is installed and empty') < src.indexOf('annotate(d.rows'), 'the empty state comes before any list is built');
+});
+
+
+// ------------------------------------------------------------------------------------------------ Step 650: website identity
+// The first live pilot read a repurposed domain (another brand's products, a foreign sign-in form, gambling spam) and the screens presented it as the
+// business's own website, with the sign-in form as a "published contact form". These tests pin the rule: only an explicit identity match is usable.
+const withIdentity = (identity, extra) => ({ ...base, id: 'w', research_status: 'done', research_summary: { identity, counts: { confirmed: 2, potential: 1, unknown: 1 },
+  opportunity: { ok: true, primary: { check_id: 'viewport_missing', title: 'Not mobile friendly', service: 'Web', recommended_solution: 'Add a viewport.', evidence_snippet: 'No viewport', evidence_source_url: 'https://acme.example/' } },
+  tiers: { small_fixes: [{ check_id: 'viewport_missing', title: 't', status: 'confirmed', service: 'Web', solution: 's', evidence_snippet: 'e', evidence_source_url: 'https://acme.example/' }], larger_projects: [] },
+  contact_channel: { best: 'form', pages_examined: 2, channels: [{ type: 'form', evidence_source_url: 'https://acme.example/', evidence_snippet: 'A form' }] } }, ...(extra || {}) });
+const corrected = { ...base, id: 'k', research_status: 'skipped', research_error: 'identity:mismatch:repurposed_domain', qualification: 'qualified', shortlisted: true, shortlist_rank: 3,
+  research_summary: { untrusted: true, identity: { verdict: 'mismatch' }, counts: { confirmed: 3, potential: 4, unknown: 3 },
+    opportunity: { ok: true, primary: { check_id: 'viewport_missing', title: 'x', service: 'Web', recommended_solution: 's', evidence_snippet: 'e', evidence_source_url: 'https://acme.example/' } },
+    contact_channel: { best: 'form', pages_examined: 2, channels: [{ type: 'form', evidence_source_url: 'https://acme.example/', evidence_snippet: 'A form' }] } } };
+
+test('WEBSITE IDENTITY (Step 650): only an explicit "match" is usable; a mismatch, an unconfirmed site and legacy research are never trusted', () => {
+  assert.equal(D.identityOf(withIdentity({ verdict: 'match' })).state, 'confirmed');
+  assert.equal(D.identityOf(withIdentity({ verdict: 'match' })).usable, true);
+  for (const v of ['mismatch', 'unconfirmed', '', undefined, 'MATCH']) assert.equal(D.identityOf(withIdentity({ verdict: v })).usable, false, 'verdict ' + v);
+  assert.equal(D.identityOf(withIdentity({})).state, 'untrusted', 'an identity record without a verdict fails closed');
+  assert.equal(D.identityOf(corrected).state, 'untrusted');
+  assert.equal(D.identityOf({ ...base, research_status: 'skipped', research_error: 'identity:unconfirmed:business_name_not_on_page' }).state, 'untrusted', 'the engine\'s own skip reason is enough, no summary needed');
+  assert.equal(D.identityOf({ ...base, research_status: 'done', research_summary: { counts: {} } }).state, 'unchecked', 'research stored before the identity check is not trusted');
+  assert.equal(D.identityOf({ ...base, research_status: 'skipped', research_error: 'capture:robots_disallow' }).state, 'none', 'an ordinary skip is not an identity problem');
+  assert.equal(D.identityOf(null).state, 'none');
+  assert.ok(D.IDENTITY_TEXT.untrusted.help.includes('still a candidate'), 'the business itself is not written off');
+});
+
+test('WEBSITE IDENTITY: an untrusted or unchecked website yields NO opportunity, NO bands, NO contact channel and never "researched" or "awaiting verification"', () => {
+  for (const c of [corrected, withIdentity({ verdict: 'mismatch' }), withIdentity({ verdict: 'unconfirmed' })]) {
+    assert.equal(D.stageOf(c), 'research_failed', 'not "awaiting your verification"');
+    assert.notEqual(D.phaseOf(c, null), 'researched');
+    assert.equal(D.isAwaitingVerification(c), false);
+    assert.equal(D.researchFacts(c), null, 'nothing from that website is surfaced');
+    const ct = D.contactOf(c); assert.deepEqual([ct.known, ct.documented, ct.channels.length], [false, false, 0]); assert.equal(ct.blockedByIdentity, true);
+    assert.equal(D.researchBadgeOf(c).kind, 'danger');
+  }
+  const legacy = withIdentity(undefined); delete legacy.research_summary.identity;
+  assert.equal(D.stageOf(legacy), 'awaiting_verification', 'legacy research can still be looked at by a person');
+  const f = D.researchFacts(legacy);
+  assert.equal(f.opportunity, null); assert.match(f.noOpportunityReason, /not confirmed/); assert.deepEqual(f.tiers, { smallFixes: [], largerProjects: [] });
+  assert.equal(D.contactOf(legacy).documented, false, 'a contact channel from unchecked research does not count');
+  assert.match(D.researchBadgeOf(legacy).label, /identity not checked/);
+  // a confirmed match is shown as before
+  const good = withIdentity({ verdict: 'match' });
+  assert.equal(D.researchFacts(good).opportunity.checkId, 'viewport_missing'); assert.equal(D.researchFacts(good).tiers.smallFixes.length, 1);
+  assert.equal(D.contactOf(good).documented, true); assert.equal(D.phaseOf(good, null), 'researched');
+});
+
+test('WEBSITE IDENTITY: a mismatch never makes a business outreach-ready, and never removes the business from the candidate list', () => {
+  const link = { prospect: prospect(), messages: [draft], suppressed: false };
+  const bad = { ...corrected, prospect_id: 'p1', crm_status: 'in_crm' };
+  assert.notEqual(D.phaseOf(bad, link), 'outreach_ready', 'a documented channel from the wrong website cannot satisfy the readiness check');
+  assert.equal(D.outreachChecks(bad, link).find((x) => x.id === 'channel_documented').ok, false);
+  assert.equal(corrected.qualification, 'qualified'); assert.equal(corrected.shortlisted, true);
+  const list = D.filterCandidates([corrected, { ...base, id: 'z', name: 'Zed' }], { ...D.FILTER_DEFAULTS, shortlist: 'yes' });
+  assert.deepEqual(list.map((c) => c.id), ['k'], 'the business is still on the shortlist');
+  assert.equal(D.stageOf({ ...corrected, crm_status: 'suppressed' }), 'blocked', 'a block still overrides');
+  const text = code('views/discoveryDetail.js') + code('views/discovery.js');
+  assert.ok(/identityOf/.test(text) && /Website research \(not used\)/.test(text) && /idn\.usable/.test(text), 'the screens use the identity guard');
 });

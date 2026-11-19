@@ -14,7 +14,7 @@ import { annotate } from '../utilities/discoveryLink.js';
 import { PROSPECT_PAGE_SIZE } from '../config.js';
 import {
   STAGE_TEXT, CRM_TEXT, RESEARCH_TEXT, PHASE_TEXT, PHASES, PHASE_FILTERS, STAGE_FILTERS, CRM_FILTERS, RESEARCH_FILTERS, SHORTLIST_FILTERS, SORT_KEYS, FILTER_DEFAULTS,
-  contactOf, stageOf, filterCandidates, sortCandidates, isDefaultFilters, facets, summarize, regionLabel, groupLabel, isAwaitingVerification
+  contactOf, identityOf, researchBadgeOf, stageOf, filterCandidates, sortCandidates, isDefaultFilters, facets, summarize, regionLabel, groupLabel, isAwaitingVerification
 } from '../utilities/discovery.js';
 
 export const title = 'Discovery';
@@ -145,7 +145,7 @@ export function render(container, ctx) {
   }
 
   function buildRow(c) {
-    const ph = PHASE_TEXT[c.phase] || PHASE_TEXT.discovered, ct = contactOf(c), rs = RESEARCH_TEXT[c.research_status] || RESEARCH_TEXT.none;
+    const ph = PHASE_TEXT[c.phase] || PHASE_TEXT.discovered, ct = contactOf(c), rs = researchBadgeOf(c), idn = identityOf(c);
     const row = h('tr', { class: 'cc-row-click' },
       h('td', { class: 'cc-cell-company', 'data-label': 'Business' },
         h('a', { class: 'cc-link-strong', href: hrefDiscovery(c.id), text: c.name || '(unnamed)' }),
@@ -155,7 +155,7 @@ export function render(container, ctx) {
       h('td', { 'data-label': 'Industry', text: groupLabel(c.category_group) + (c.category ? ' · ' + c.category.replace(/_/g, ' ') : '') }),
       h('td', { 'data-label': 'Score' }, scorePill(c.score)),
       h('td', { 'data-label': 'Phase' }, badge(ph.label, ph.kind)),
-      h('td', { 'data-label': 'Contact channel' }, c.research_status === 'done' ? badge(ct.label, ct.kind) : h('span', { class: 'cc-muted', text: 'Not researched' })),
+      h('td', { 'data-label': 'Contact channel' }, idn.state === 'untrusted' ? badge('Website does not match', 'danger') : c.research_status === 'done' ? badge(ct.label, ct.kind) : h('span', { class: 'cc-muted', text: 'Not researched' })),
       h('td', { 'data-label': 'Research' }, badge(rs.label, rs.kind)));
     row.addEventListener('click', (event) => {
       if (event.target && event.target.closest && event.target.closest('a')) return;

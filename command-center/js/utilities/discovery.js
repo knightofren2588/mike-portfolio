@@ -14,7 +14,7 @@ export const STAGE_TEXT = {
   awaiting_verification: { label: 'Awaiting your verification', kind: 'warn', help: 'Public-website research is done. Check the business yourself, then run intake. Nothing has been verified, approved or contacted.' },
   ready_for_research: { label: 'Ready for research', kind: 'info', help: 'Discovered and checked against the CRM. Passive public-website research has not run yet.' },
   researching: { label: 'Research queued', kind: 'info', help: 'Research is queued or running. At most 3 public pages are read.' },
-  research_failed: { label: 'Research did not finish', kind: 'neutral', help: 'The site could not be read (robots.txt, redirect, an error or the retry limit). Nothing was concluded.' },
+  research_failed: { label: 'Research did not finish', kind: 'neutral', help: 'The site could not be read, or it was not this business\'s own website (robots.txt, redirect, an error, the retry limit or a website identity mismatch). Nothing was concluded.' },
   in_crm: { label: 'Already in CRM', kind: 'ok', help: 'A prospect with this Overture id or website already exists. See the prospect record.' },
   blocked: { label: 'Blocked', kind: 'danger', help: 'Possible duplicate or suppressed. It is not researched and not recommended.' }
 };
@@ -58,11 +58,51 @@ export const SHORTLIST_FILTERS = ['any', 'yes'];
 export const SORT_KEYS = ['score', 'name', 'region', 'newest', 'rank'];
 export const FILTER_DEFAULTS = { q: '', region: '', group: '', phase: '', stage: '', crm: '', research: '', shortlist: 'any', sort: 'score' };
 
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Step 650: WEBSITE IDENTITY. Research is only usable if the pages it read belonged to THIS business. The first live pilot read a domain that had
+// been repurposed (another brand's products, a foreign sign-in form, gambling spam) and the screens showed it as the business's own website. The
+// engine now records an identity verdict with every result, and a guarded correction marked the bad result untrusted. This is the ONE place the
+// screens ask "can this research be used?":
+//   confirmed  the engine compared the pages with the business name and they matched   -> findings, opportunity and contact channel are shown
+//   untrusted  mismatch, not confirmed, or marked untrusted                            -> nothing is shown as a finding, recommendation or contact channel
+//   unchecked  research stored before the identity check existed                       -> not recommended, and no contact channel is used
+//   none       no research stored
+// A website mismatch says nothing against the BUSINESS: it stays a qualified candidate; only that website is not trusted.
+// ---------------------------------------------------------------------------------------------------------------------------------
+export const IDENTITY_TEXT = {
+  confirmed: { label: 'Website matches this business', kind: 'ok', help: 'The research compared the pages it read with this business\'s name and they matched.' },
+  untrusted: { label: 'Website does not match this business', kind: 'danger', help: 'The website at the listed address is not confirmed as this business\'s own (it may have changed hands or been repurposed). Nothing read from it is used: no finding, opportunity or contact channel. The business itself is still a candidate; check whether it has a different website.' },
+  unchecked: { label: 'Website identity not checked', kind: 'warn', help: 'This research was stored before the website identity check existed, so nobody has confirmed the pages belong to this business. It is not used for a recommendation or a contact channel.' },
+  none: { label: 'No website research', kind: 'neutral', help: '' }
+};
+
+/** { state: confirmed | untrusted | unchecked | none, usable, verdict, label, kind, help }. Fails closed: anything that is not an explicit "match" is not usable. */
+export function identityOf(c) {
+  const s = c && c.research_summary && typeof c.research_summary === 'object' ? c.research_summary : null;
+  const err = c && typeof c.research_error === 'string' ? c.research_error : '';
+  const id = s && s.identity && typeof s.identity === 'object' ? s.identity : null;
+  let state = 'none';
+  if (/^identity:/.test(err) || (s && s.untrusted === true) || (id && id.verdict !== 'match')) state = 'untrusted';
+  else if (id) state = 'confirmed';
+  else if (s) state = 'unchecked';
+  const verdict = id && typeof id.verdict === 'string' ? id.verdict : (/^identity:/.test(err) ? err.split(':')[1] || '' : '');
+  return { state, usable: state === 'confirmed', verdict, ...IDENTITY_TEXT[state] };
+}
+
+/** The research badge for lists and headers: an untrusted website is shown as such, never as "Done" or a plain "Skipped". */
+export function researchBadgeOf(c) {
+  const idn = identityOf(c);
+  if (idn.state === 'untrusted') return { label: idn.label, kind: 'danger' };
+  if (idn.state === 'unchecked' && c && c.research_status === 'done') return { label: 'Done, website identity not checked', kind: 'warn' };
+  return RESEARCH_TEXT[c && c.research_status] || RESEARCH_TEXT.none;
+}
+
 /** The one place that decides what step a candidate is at. */
 export function stageOf(c) {
   if (!c) return 'blocked';
   if (c.prospect_id || c.crm_status === 'in_crm') return 'in_crm';
   if (c.crm_status === 'suppressed' || c.crm_status === 'possible_duplicate') return 'blocked';
+  if (identityOf(c).state === 'untrusted') return 'research_failed';   // Step 650: a website that is not the business's own is never "researched"
   if (c.research_status === 'done') return 'awaiting_verification';
   if (c.research_status === 'queued' || c.research_status === 'claimed') return 'researching';
   if (c.research_status === 'failed' || c.research_status === 'skipped') return 'research_failed';
@@ -128,7 +168,7 @@ export function phaseOf(c, link) {
     if (!isHumanVerifiedProspect(p)) return 'in_crm';
     return outreachChecks(c, link).every((x) => x.ok) ? 'outreach_ready' : 'verified';
   }
-  return c.research_status === 'done' ? 'researched' : 'discovered';
+  return c.research_status === 'done' && identityOf(c).state !== 'untrusted' ? 'researched' : 'discovered';
 }
 
 export function filterCandidates(rows, f) {
@@ -200,16 +240,19 @@ export function missingOf(c) { return (Array.isArray(c && c.missing) ? c.missing
 export function researchFacts(c) {
   const s = (c && c.research_summary && typeof c.research_summary === 'object') ? c.research_summary : null;
   if (!s) return null;
+  const idn = identityOf(c);
+  if (idn.state === 'untrusted') return null;   // Step 650: nothing from a website that is not the business's own
   const counts = s.counts || {};
   const opp = s.opportunity && typeof s.opportunity === 'object' ? s.opportunity : null;
   return {
     demoFixture: s.capture_source === 'fixture',
     capturedAt: s.captured_at || null, finalUrl: s.final_url || null, requests: s.requests_made ?? null, pages: s.pages_fetched ?? null,
     counts: { confirmed: num(counts.confirmed), potential: num(counts.potential), unknown: num(counts.unknown) },
-    opportunity: opp && opp.ok && opp.primary ? { checkId: opp.primary.check_id, title: opp.primary.title, service: opp.primary.service, solution: opp.primary.recommended_solution, evidence: opp.primary.evidence_snippet || '', source: opp.primary.evidence_source_url || '' } : null,
-    noOpportunityReason: opp && !opp.ok ? String(opp.reason || '') : '',
+    identity: idn,
+    opportunity: idn.usable && opp && opp.ok && opp.primary ? { checkId: opp.primary.check_id, title: opp.primary.title, service: opp.primary.service, solution: opp.primary.recommended_solution, evidence: opp.primary.evidence_snippet || '', source: opp.primary.evidence_source_url || '' } : null,
+    noOpportunityReason: !idn.usable ? 'The website identity is not confirmed, so no opportunity is recommended.' : opp && !opp.ok ? String(opp.reason || '') : '',
     heldBack: Array.isArray(opp && opp.held_back_for_authorized_assessment) ? opp.held_back_for_authorized_assessment : [],
-    tiers: tiersOf(s.tiers)
+    tiers: idn.usable ? tiersOf(s.tiers) : { smallFixes: [], largerProjects: [] }
   };
 }
 
@@ -235,6 +278,7 @@ export const CONTACT_NOT_CONSENT = 'A published contact method is not consent to
 export function contactOf(c) {
   const s = c && c.research_summary && typeof c.research_summary === 'object' ? c.research_summary : null;
   const cc = s && s.contact_channel && typeof s.contact_channel === 'object' ? s.contact_channel : null;
+  if (['untrusted', 'unchecked'].includes(identityOf(c).state)) return { known: false, documented: false, best: null, label: 'Not used (website identity not confirmed)', kind: 'warn', channels: [], pagesExamined: null, blockedByIdentity: true };
   if (!cc || !CONTACT_TEXT[cc.best]) return { known: false, documented: false, best: null, label: 'Not recorded', kind: 'neutral', channels: [], pagesExamined: null };
   const channels = (Array.isArray(cc.channels) ? cc.channels : []).filter((x) => x && ['email', 'form', 'phone'].includes(x.type) && typeof x.evidence_source_url === 'string')
     .slice(0, 8).map((x) => ({ type: x.type, source: x.evidence_source_url, snippet: String(x.evidence_snippet || ''), domain: typeof x.domain === 'string' ? x.domain : '', ownDomain: x.own_domain === true, freeMail: x.free_mail === true, roleAddress: x.role_address === true }));
