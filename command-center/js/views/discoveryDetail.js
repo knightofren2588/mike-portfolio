@@ -13,7 +13,7 @@ import { panel, emptyBlock } from '../components/ui.js';
 import { findingsPanels } from '../components/findingsPanel.js';
 import { recommendation, latestRun, countByStatus } from '../utilities/findings.js';
 import {
-  STAGE_TEXT, CRM_TEXT, RESEARCH_TEXT, PHASE_TEXT, CONTACT_NOT_CONSENT, contactOf, outreachChecks, phaseOf, stageOf, regionLabel, groupLabel, hypothesesOf, missingOf, researchFacts, scoreLines
+  STAGE_TEXT, CRM_TEXT, RESEARCH_TEXT, PHASE_TEXT, CONTACT_NOT_CONSENT, contactOf, identityOf, researchBadgeOf, outreachChecks, phaseOf, stageOf, regionLabel, groupLabel, hypothesesOf, missingOf, researchFacts, scoreLines
 } from '../utilities/discovery.js';
 
 export const title = 'Discovered business';
@@ -35,13 +35,16 @@ export function render(container, ctx) {
     return;
   }
   const link = linkFor(c, ctx.snap), phase = phaseOf(c, link), ph = PHASE_TEXT[phase], checks = outreachChecks(c, link), contact = contactOf(c);
-  const stage = stageOf(c), st = STAGE_TEXT[stage], crm = CRM_TEXT[c.crm_status] || CRM_TEXT.unchecked, rs = RESEARCH_TEXT[c.research_status] || RESEARCH_TEXT.none;
+  const stage = stageOf(c), st = STAGE_TEXT[stage], crm = CRM_TEXT[c.crm_status] || CRM_TEXT.unchecked, rs = researchBadgeOf(c), idn = identityOf(c);
   const findings = ctx.discoveryFindings && ctx.discoveryFindings.rows ? ctx.discoveryFindings.rows : [];
   const run = latestRun(findings), counts = countByStatus(run), facts = researchFacts(c), blocked = stage === 'blocked';
 
   container.appendChild(h('h1', { class: 'cc-h1', text: c.name }));
   container.appendChild(h('p', {}, badge(ph.label, ph.kind), ' ', badge(st.label, st.kind), ' ', badge('Duplicate / suppression: ' + crm.label, crm.kind), ' ', badge('Research: ' + rs.label, rs.kind), c.shortlisted ? ' ' : null, c.shortlisted ? badge('Shortlist #' + c.shortlist_rank, 'info') : null));
   container.appendChild(notice(blocked ? 'error' : 'info', ph.help + ' ' + (link && link.prospect ? '' : 'This business was found in a public directory. It is not a prospect and not human-verified.')));
+
+  // Step 650: research from a website that is not confirmed as this business's own is never shown as a finding, a recommendation or a contact channel
+  if (idn.state === 'untrusted' || idn.state === 'unchecked') container.appendChild(notice(idn.state === 'untrusted' ? 'error' : 'warn', idn.label + '. ' + idn.help));
 
   // ----- where it stands -----
   const standing = [
@@ -66,7 +69,7 @@ export function render(container, ctx) {
     h('p', {}, badge(contact.label, contact.kind), contact.pagesExamined !== null ? h('span', { class: 'cc-muted', text: ' · ' + contact.pagesExamined + ' page(s) examined' }) : null),
     contact.channels.length
       ? h('ul', { class: 'cc-list' }, contact.channels.map((x) => h('li', {}, badge(x.type === 'email' ? 'Email' : x.type === 'form' ? 'Form' : 'Phone', 'neutral'), ' ', x.snippet, h('div', { class: 'cc-muted', text: 'Seen on: ' + x.source + (x.type === 'email' ? ' · ' + (x.ownDomain ? 'the business\'s own domain' : x.freeMail ? 'a free mail provider' : 'another domain') + (x.roleAddress ? ' · a shared role address' : '') : '') }))))
-      : h('p', { class: 'cc-muted', text: contact.known ? 'No email, contact form or phone number was found on the pages read. That does not mean none exists: other pages, social profiles and directories were not examined.' : 'Research has not recorded a contact result for this business yet.' }),
+      : h('p', { class: 'cc-muted', text: contact.blockedByIdentity ? 'A contact channel read from that website is not shown, because the website is not confirmed as this business\'s own.' : contact.known ? 'No email, contact form or phone number was found on the pages read. That does not mean none exists: other pages, social profiles and directories were not examined.' : 'Research has not recorded a contact result for this business yet.' }),
     h('p', { class: 'cc-muted', text: 'The address and the number themselves are not stored. Open the page yourself when you verify the business; intake is where the address and its source page are recorded. ' + CONTACT_NOT_CONSENT }))));
 
   // ----- source evidence -----
@@ -100,6 +103,10 @@ export function render(container, ctx) {
 
   if (blocked) {
     container.appendChild(panel('Verified findings', notice('error', 'This business is a possible duplicate or suppressed. It is not researched and no recommendation is shown.')));
+  } else if (run.length && !idn.usable) {
+    container.appendChild(panel('Website research (not used)', h('div', {},
+      notice(idn.state === 'untrusted' ? 'error' : 'warn', idn.help),
+      factList([['Findings stored as an audit trail', run.length + ' (not shown and not used)'], ['What to do', 'Open the business\'s own website yourself. It may use a different address than the one listed. Nothing here is a recommendation.']]))));
   } else if (!run.length) {
     container.appendChild(panel('Verified findings', emptyBlock(
       c.research_status === 'done' ? 'Research finished but no findings could be loaded.' : 'No website research yet.',
