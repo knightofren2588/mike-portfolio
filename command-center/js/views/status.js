@@ -8,6 +8,7 @@
 import { h, notice, fmtDateTime, fmtRelative, humanize, emptyState } from '../dom.js';
 import { getInsights } from '../utilities/insights.js';
 import { block, healthCard } from '../components/dashboard.js';
+import { discoveryHealthCard } from '../components/discoveryHealth.js';
 import { activityLabel } from '../utilities/labels.js';
 
 export const title = 'System Status';
@@ -42,6 +43,10 @@ export function render(container, ctx) {
   container.appendChild(block('Automations',
     h('div', { class: 'cc-health-grid cc-health-grid-full' }, sh.systems.map((s) => healthCard(s, now, false))),
     { id: 'cc-st-automations' }));
+
+  container.appendChild(block('Business discovery',
+    h('div', { class: 'cc-health-grid cc-health-grid-full' }, discoveryHealthCard(ctx.discoveryHealth, now)),
+    { id: 'cc-st-discovery' }));
 
   container.appendChild(block('Rules in effect', h('ul', { class: 'cc-list' },
     h('li', { text: 'Scheduled messages: flagged as possibly stuck after ' + thresholdText(th.scheduledStuckMinutes, (m) => m + ' minutes') +

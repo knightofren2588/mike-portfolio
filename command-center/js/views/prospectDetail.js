@@ -10,7 +10,8 @@
 // checked against an allowlist. All database text is shown through textContent only.
 
 import { h, notice, badge, emptyState, factList, fmtRange, fmtDateTime, fmtRelative, formatValue } from '../dom.js';
-import { isFollowupDue, isDoNotContact, isSuppressed } from '../api.js';
+import { isFollowupDue, isDoNotContact, isSuppressed, senderWarning } from '../api.js';
+import { launchPathPanel, findingsPanels, recommendedPanel } from '../components/findingsPanel.js';
 import {
   messageTypeTitle, messageTypeLabel, messageTypeOrder, messageStatusLabel, activityLabel, activityKind
 } from '../utilities/labels.js';
@@ -63,7 +64,7 @@ function detailsBlock(value) {
 
 // ---------- tabs ----------
 
-function summaryTab(p, messages, activities, now) {
+function summaryTab(p, messages, activities, now, extras) {
   const location = [p.city, p.state].filter(Boolean).join(', ');
   const recent = activities.slice().sort((a, b) => time(b.created_at) - time(a.created_at)).slice(0, 3);
   const latest = messages.slice().sort((a, b) => time(b.created_at) - time(a.created_at))[0];
@@ -85,7 +86,7 @@ function summaryTab(p, messages, activities, now) {
     recent.length ? h('a', { href: hrefProspect(p.id, 'timeline'), text: 'See the full timeline →' }) : null
   );
 
-  return h('div', { class: 'cc-grid-2' },
+  const grid = h('div', { class: 'cc-grid-2' },
     panel('Company', factList([
       ['Company', p.company_name], ['Industry', p.industry], ['Location', location || null], ['Website', p.website]
     ]), { slot: 'summary-edit-company' }),
@@ -99,10 +100,13 @@ function summaryTab(p, messages, activities, now) {
     ])),
     panel('At a glance', glance)
   );
+  return h('div', { class: 'cc-stack' }, extras.launchPath, grid);
 }
 
-function researchTab(p) {
+function researchTab(p, extras) {
   return h('div', { class: 'cc-stack' },
+    extras.recommended,
+    ...extras.findings,
     panel('Pain point', renderValue(p.pain_point)),
     panel('Evidence', renderValue(p.evidence)),
     panel('Proposed offer', renderValue(p.proposed_offer)),
@@ -259,11 +263,23 @@ export function render(container, ctx) {
     'Prospect sections'
   ));
 
+  // Step 612: research findings, the recommended solution and the launch path (all read-only)
+  const blocked = isDoNotContact(p) || isSuppressed(snap, p.contact_email);
+  const findings = snap.findingsByProspect ? (snap.findingsByProspect.get(String(p.id)) || []) : [];
+  const initial = messages.filter((m) => m.message_type === 'initial').sort((a, b) => time(b.created_at) - time(a.created_at))[0] || null;
+  const extras = {
+    launchPath: launchPathPanel({ findingsAvailable: snap.findingsAvailable, findings: findings, blocked: blocked, initialMessage: initial, senderNote: senderWarning('initial') }),
+    recommended: recommendedPanel(findings, blocked),
+    findings: snap.findingsAvailable === false
+      ? [panel('Research findings', emptyBlock('Research findings are not installed yet.', 'The website_findings table has not been added to the database, so there is nothing to show here.'))]
+      : (findings.length ? findingsPanels(findings) : [panel('Research findings', emptyBlock('No research stored for this prospect yet.', 'Run the research pipeline for this prospect, then store the findings.'))])
+  };
+
   let content;
-  if (tab === 'research') content = researchTab(p);
+  if (tab === 'research') content = researchTab(p, extras);
   else if (tab === 'outreach') content = outreachTab(messages);
   else if (tab === 'timeline') content = timelineTab(p, activities, ctx.route.params.order === 'asc' ? 'asc' : 'desc', now);
   else if (tab === 'contact') content = contactTab(snap, p, now);
-  else content = summaryTab(p, messages, activities, now);
+  else content = summaryTab(p, messages, activities, now, extras);
   container.appendChild(h('div', { class: 'cc-tab-panel' }, content));
 }

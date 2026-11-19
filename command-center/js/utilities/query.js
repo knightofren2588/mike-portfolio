@@ -65,6 +65,14 @@ export function pickText(value, max) {
     .trim();
 }
 
+export function hrefDiscovery(id) {
+  return buildHash(id ? ['discovery', String(id)] : ['discovery'], {});
+}
+
+export function hrefQueue() {
+  return buildHash(['queue'], {});
+}
+
 export function hrefProspect(id, tab) {
   const segments = ['prospects', String(id)];
   if (tab && tab !== 'summary') segments.push(tab);

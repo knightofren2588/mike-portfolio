@@ -8,7 +8,7 @@
 
 import { sb, startupError } from './supabaseClient.js';
 import * as auth from './auth.js';
-import { getSnapshot, clearCache, isAwaitingApproval } from './api.js';
+import { getSnapshot, clearCache, isAwaitingApproval, getDiscovery, peekDiscovery, getDiscoveryFindings, getDiscoveryHealth } from './api.js';
 import { h, clear, notice } from './dom.js';
 import { closeActiveModal } from './modal.js';
 import { endSession, onSessionEnd } from './utilities/session.js';
@@ -27,12 +27,16 @@ import * as prospects from './views/prospects.js';
 import * as prospectDetail from './views/prospectDetail.js';
 import * as activity from './views/activity.js';
 import * as status from './views/status.js';
+import * as discovery from './views/discovery.js';
+import * as discoveryDetail from './views/discoveryDetail.js';
+import { isAwaitingVerification } from './utilities/discovery.js';
 
 const ROUTES = {
   overview: { view: overview },
   queue: { view: queue },
   pipeline: { view: pipeline },
   prospects: { view: prospects, detail: prospectDetail },
+  discovery: { view: discovery, detail: discoveryDetail },
   activity: { view: activity },
   status: { view: status }
 };
@@ -188,7 +192,7 @@ async function renderRoute() {
     if (token !== renderToken || !main || !shell) return; // a newer navigation, or the session ended
 
     const route = ROUTES[r.name];
-    const view = r.name === 'prospects' && r.segments[1] ? route.detail : route.view;
+    const view = (r.name === 'prospects' || r.name === 'discovery') && r.segments[1] ? route.detail : route.view;
     const ctx = {
       snap: snap,
       route: r,
@@ -197,6 +201,18 @@ async function renderRoute() {
       flash: flash,
       sessionExpired: sessionExpired
     };
+    // Discovery data is loaded only on its own screen (read-only; a problem there never blocks the rest of the app).
+    if (r.name === 'discovery') {
+      ctx.discovery = await getDiscovery();
+      if (r.segments[1] && ctx.discovery.available) ctx.discoveryFindings = await getDiscoveryFindings(r.segments[1]);
+      if (token !== renderToken || !main || !shell) return;
+    }
+
+    // System Status also shows the discovery job health (heartbeat rows only; a problem there never blocks the page).
+    if (r.name === 'status') {
+      ctx.discoveryHealth = await getDiscoveryHealth();
+      if (token !== renderToken || !main || !shell) return;
+    }
 
     clear(main);
     main.removeAttribute('aria-busy');
@@ -214,7 +230,7 @@ async function renderRoute() {
       crumbs: typeof view.crumbs === 'function' ? view.crumbs(ctx) : [{ label: entry.group }, { label: entry.label }]
     });
     shell.setUpdated(snap.loadedAt);
-    shell.setBadges({ queue: snap.messages.filter(isAwaitingApproval).length, status: statusBadgeCount(snap) });
+    shell.setBadges({ queue: snap.messages.filter(isAwaitingApproval).length, status: statusBadgeCount(snap), discovery: discoveryBadgeCount() });
 
     if (pendingFlash) {
       main.insertBefore(notice(pendingFlash.kind, pendingFlash.text), main.firstChild);
@@ -246,6 +262,16 @@ function statusBadgeCount(snap) {
     return getInsights(snap).systemHealth.badgeCount;
   } catch (e) {
     return 0; // a problem computing the badge must never stop a page from drawing
+  }
+}
+
+/** Businesses awaiting YOUR verification. Uses only what discovery has already loaded; it never triggers a load of its own. */
+function discoveryBadgeCount() {
+  try {
+    const d = peekDiscovery();
+    return d && d.available ? d.rows.filter(isAwaitingVerification).length : 0;
+  } catch (e) {
+    return 0;
   }
 }
 

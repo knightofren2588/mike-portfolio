@@ -10,6 +10,7 @@
 import { sb } from './supabaseClient.js';
 import { PAGE_SIZE, MAX_ROWS_PER_TABLE, SENDER_WORKFLOWS } from './config.js';
 import { PROSPECT_STATUSES } from './utilities/labels.js';
+import { isMissingTable } from './utilities/findings.js';
 
 const PROSPECT_COLUMNS = [
   'id', 'company_name', 'website', 'industry', 'city', 'state', 'contact_name',
@@ -31,6 +32,32 @@ const MESSAGE_COLUMNS = [
 const MESSAGE_AUDIT_COLUMNS = ['approved_at', 'approved_by', 'rejected_at', 'rejection_reason', 'edited_at'].join(',');
 
 const ACTIVITY_COLUMNS = ['id', 'prospect_id', 'activity_type', 'details', 'created_at'].join(',');
+
+// Step 612: website research findings (read-only, admin-only through RLS). The table is added by a separate, not yet applied
+// migration, so a missing table is NOT an error: the app simply shows "not installed yet".
+const FINDING_COLUMNS = [
+  'id', 'prospect_id', 'run_sha256', 'check_id', 'category', 'title', 'status', 'confidence', 'observation',
+  'evidence_source_url', 'evidence_source_type', 'evidence_snippet', 'observed_at', 'recommended_solution',
+  'impact_note', 'service', 'weight', 'is_primary', 'created_at'
+].join(',');
+
+// Step 620: discovered businesses (read-only, admin-only through RLS). Public-directory data staged by the research engine; NOT prospects.
+// Fail-soft like findings: a missing table (migration 33 not applied yet) is "not installed", never an error.
+// There is no email or phone VALUE in these tables, only has_phone / has_email flags.
+const DISCOVERY_COLUMNS = [
+  'id', 'overture_id', 'name', 'website', 'domain', 'address', 'city', 'state', 'postcode', 'region_label', 'category', 'category_group',
+  'confidence', 'datasets', 'independent_datasets', 'operating_status', 'has_phone', 'has_email', 'identity_strength', 'qualification',
+  'score', 'score_parts', 'shortlisted', 'shortlist_rank', 'shortlist_reason', 'hypotheses', 'missing', 'rules_version', 'crm_status',
+  'crm_reason', 'crm_checked_at', 'prospect_id', 'research_status', 'research_attempts', 'research_error', 'researched_at',
+  'research_summary', 'research_claimed_at', 'promoted_at', 'first_seen_at', 'last_seen_at'
+].join(',');
+const DISCOVERY_RUN_COLUMNS = ['id', 'run_key', 'kind', 'status', 'overture_release', 'rules_version', 'executor', 'stats', 'rows_staged', 'started_at', 'finished_at'].join(',');
+// Step 624: one heartbeat row per scheduled pull or research run (success or failure). The error text never contains an address or a link (the database refuses it).
+const DISCOVERY_HEARTBEAT_COLUMNS = ['id', 'kind', 'status', 'executor', 'error', 'started_at'].join(',');
+const DISCOVERY_FINDING_COLUMNS = [
+  'id', 'candidate_id', 'run_sha256', 'check_id', 'category', 'title', 'status', 'confidence', 'observation', 'evidence_source_url',
+  'evidence_source_type', 'evidence_snippet', 'observed_at', 'recommended_solution', 'impact_note', 'service', 'weight', 'is_primary', 'created_at'
+].join(',');
 
 // Only the address is needed (to disable Approve for suppressed contacts).
 const SUPPRESSION_COLUMNS = ['id', 'email'].join(',');
@@ -65,13 +92,12 @@ function toError(table, error) {
 }
 
 /** Page through a table with .select() only. Stable order so pages do not overlap. */
-async function selectAll(table, columns, orderColumn) {
+async function selectAll(table, columns, orderColumn, narrow) {
   const order = orderColumn || 'created_at';
   const rows = [];
   for (let from = 0; from < MAX_ROWS_PER_TABLE; from += PAGE_SIZE) {
-    const { data, error } = await sb
-      .from(table)
-      .select(columns)
+    const base = sb.from(table).select(columns);
+    const { data, error } = await (typeof narrow === 'function' ? narrow(base) : base)
       .order(order, { ascending: false })
       .order('id', { ascending: false })
       .range(from, from + PAGE_SIZE - 1);
@@ -98,29 +124,120 @@ async function selectMessages() {
   }
 }
 
+/** Findings never block the rest of the app: any problem is reported as "unavailable". */
+async function selectFindings() {
+  try {
+    const result = await selectAll('website_findings', FINDING_COLUMNS);
+    result.available = true;
+    return result;
+  } catch (err) {
+    if (err && err.authExpired) throw err; // a dead session is still a dead session
+    return { rows: [], truncated: false, available: false, missing: isMissingTable(err && { code: err.code, message: err.message }) };
+  }
+}
+
+/** Discovery never blocks the rest of the app: any problem is reported as "unavailable". Only qualified candidates are loaded (rejected ones are counted in the run stats). */
+async function selectDiscovery() {
+  try {
+    const result = await selectAll('discovery_candidates', DISCOVERY_COLUMNS, 'score', (q) => q.eq('qualification', 'qualified'));
+    // the newest STAGING batch carries the statistics; heartbeats (kind pull / research) are loaded separately and never mistaken for it
+    const { data: runs } = await sb.from('discovery_runs').select(DISCOVERY_RUN_COLUMNS).eq('kind', 'batch').order('started_at', { ascending: false }).limit(1);
+    return { ...result, available: true, run: runs && runs[0] ? runs[0] : null, heartbeats: await selectHeartbeats(), loadedAt: new Date() };
+  } catch (err) {
+    if (err && err.authExpired) throw err;
+    return { rows: [], truncated: false, available: false, run: null, loadedAt: new Date(), missing: isMissingTable(err && { code: err.code, message: err.message }) };
+  }
+}
+
+/** Recent scheduled-run heartbeats. Soft: a problem here only means "no health information", it never hides the businesses. */
+async function selectHeartbeats() {
+  try {
+    const { data, error } = await sb.from('discovery_runs').select(DISCOVERY_HEARTBEAT_COLUMNS).in('kind', ['pull', 'research']).order('started_at', { ascending: false }).limit(60);
+    return error ? [] : (data || []);
+  } catch (err) {
+    if (err && err.authExpired) throw err;
+    return [];
+  }
+}
+
+/** The light read for System Status: heartbeats plus stuck claims only (it does not load the businesses). */
+async function selectDiscoveryHealth() {
+  try {
+    const { error: probe } = await sb.from('discovery_runs').select('id').limit(1);
+    if (probe) throw toError('discovery_runs', probe);
+    const heartbeats = await selectHeartbeats();
+    const { data: claimed } = await sb.from('discovery_candidates').select('id,research_claimed_at').eq('research_status', 'claimed').limit(200);
+    return { available: true, heartbeats, rows: (claimed || []).map((c) => ({ research_status: 'claimed', research_claimed_at: c.research_claimed_at })), loadedAt: new Date() };
+  } catch (err) {
+    if (err && err.authExpired) throw err;
+    return { available: false, heartbeats: [], rows: [], missing: isMissingTable(err && { code: err.code, message: err.message }), loadedAt: new Date() };
+  }
+}
+
 let cache = null;
 let inflight = null;
+let discoveryCache = null;
+let healthCache = null;
 let generation = 0; // bumped by clearCache(): a load that was in flight when you signed out must not refill the cache
 
 export function clearCache() {
   cache = null;
   inflight = null;
+  discoveryCache = null;
+  healthCache = null;
   generation++;
+}
+
+/** Discovered businesses (read-only), loaded on demand and cached until Refresh or sign-out. */
+export async function getDiscovery(options) {
+  if (discoveryCache && !(options && options.force)) return discoveryCache;
+  const startedInGeneration = generation;
+  const result = await selectDiscovery();
+  if (startedInGeneration === generation) discoveryCache = result;
+  return result;
+}
+
+/** Discovery job health for System Status (read-only, cached until Refresh or sign-out; a problem here never blocks the page). */
+export async function getDiscoveryHealth(options) {
+  if (healthCache && !(options && options.force)) return healthCache;
+  const startedInGeneration = generation;
+  const result = await selectDiscoveryHealth();
+  if (startedInGeneration === generation) healthCache = result;
+  return result;
+}
+
+/** The cached discovery data, or null when it has not been loaded (used for the navigation badge; never loads anything). */
+export function peekDiscovery() {
+  return discoveryCache;
+}
+
+/** Research evidence for ONE candidate. Same row shape as website_findings, so the same panels display it. */
+export async function getDiscoveryFindings(candidateId) {
+  try {
+    const { data, error } = await sb.from('discovery_findings').select(DISCOVERY_FINDING_COLUMNS).eq('candidate_id', String(candidateId)).order('created_at', { ascending: false }).limit(100);
+    if (error) throw toError('discovery_findings', error);
+    return { rows: data || [], available: true };
+  } catch (err) {
+    if (err && err.authExpired) throw err;
+    return { rows: [], available: false };
+  }
 }
 
 /** Load (or reuse) one read-only snapshot of the CRM. */
 export function getSnapshot(options) {
   const force = !!(options && options.force);
+  if (force) { discoveryCache = null; healthCache = null; } // Refresh re-reads discovery data too
   if (cache && !force) return Promise.resolve(cache);
   if (inflight) return inflight;
 
   const run = (async () => {
     const startedInGeneration = generation;
-    const [p, m, a, s] = await Promise.all([
+    const [p, m, a, s, f] = await Promise.all([
       selectAll('prospects', PROSPECT_COLUMNS),
       selectMessages(),
       selectAll('activities', ACTIVITY_COLUMNS),
-      selectAll('suppression_list', SUPPRESSION_COLUMNS, 'suppressed_at')
+      selectAll('suppression_list', SUPPRESSION_COLUMNS, 'suppressed_at'),
+      selectFindings()
     ]);
 
     const prospectsById = new Map();
@@ -138,6 +255,13 @@ export function getSnapshot(options) {
       const key = String(row.prospect_id);
       if (!activitiesByProspect.has(key)) activitiesByProspect.set(key, []);
       activitiesByProspect.get(key).push(row);
+    }
+
+    const findingsByProspect = new Map();
+    for (const row of f.rows) {
+      const key = String(row.prospect_id);
+      if (!findingsByProspect.has(key)) findingsByProspect.set(key, []);
+      findingsByProspect.get(key).push(row);
     }
 
     const suppressed = new Set();
@@ -162,7 +286,9 @@ export function getSnapshot(options) {
       },
       prospectsById: prospectsById,
       messagesByProspect: messagesByProspect,
-      activitiesByProspect: activitiesByProspect
+      activitiesByProspect: activitiesByProspect,
+      findingsByProspect: findingsByProspect,
+      findingsAvailable: f.available
     };
     // If you signed out while this was loading, hand the result to the caller but do NOT keep it.
     if (startedInGeneration === generation) cache = snapshot;

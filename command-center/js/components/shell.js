@@ -19,7 +19,8 @@ export const NAV = [
     items: [
       { route: 'queue', label: 'Approval Queue', badge: 'queue' },
       { route: 'pipeline', label: 'Pipeline' },
-      { route: 'prospects', label: 'Prospects' }
+      { route: 'prospects', label: 'Prospects' },
+      { route: 'discovery', label: 'Discovery', badge: 'discovery' }
     ]
   },
   { group: 'Activity', items: [{ route: 'activity', label: 'Activity Feed' }] },
@@ -35,7 +36,7 @@ export function navEntry(route) {
   return { group: '', label: '' };
 }
 
-const BADGE_TITLES = { queue: ' awaiting approval', status: ' system exceptions' };
+const BADGE_TITLES = { queue: ' awaiting approval', status: ' system exceptions', discovery: ' businesses awaiting your verification' };
 
 export function createShell(options) {
   const root = options.root;
